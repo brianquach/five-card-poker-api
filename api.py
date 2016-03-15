@@ -14,17 +14,6 @@ from resource import USER_REQUEST
 @endpoints.api(name='poker', version='v1')
 class FiveCardPokerAPI(remote.Service):
     """An API for a two-player five card poker game."""
-    # Players are delt a five card hand and each player has one opportunity,
-    # starting with player one, to replace up to 5 cards in their hand with new
-    # cards from the top of the deck.
-
-    # Once each player has finished replacing their cards, each hand is then
-    # revealed. The player with the highest poker hand wins.
-
-    # Username must be unique.
-
-    # Code Citation:
-    #     https://github.com/udacity/FSND-P4-Design-A-Game/blob/master/Skeleton%20Project%20Guess-a-Number/api.py  # noqa
     @endpoints.method(
         request_message=USER_REQUEST,
         response_message=StringMessage,
@@ -33,7 +22,17 @@ class FiveCardPokerAPI(remote.Service):
         http_method='POST'
     )
     def create_user(self, request):
-        """Create a User."""
+        """Create a player."""
+        return self._create_user(request)
+
+    def _create_user(request):
+        """Create a player.
+
+        Username must be unique.
+
+        Code Citation:
+            https://github.com/udacity/FSND-P4-Design-A-Game/blob/master/Skeleton%20Project%20Guess-a-Number/api.py  # noqa
+        """
         if User.query(User.name == request.user_name).get():
             raise endpoints.ConflictException(
                 'A User with that name already exists!'
