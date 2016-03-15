@@ -14,4 +14,4 @@ class User(ndb.Model):
             game relevant events
     """
     name = ndb.StringProperty(required=True)
-    email =ndb.StringProperty()
+    email = ndb.StringProperty()
