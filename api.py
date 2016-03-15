@@ -31,7 +31,7 @@ class FiveCardPokerAPI(remote.Service):
         Username must be unique.
 
         Code Citation:
-            https://github.com/udacity/FSND-P4-Design-A-Game/blob/master/Skeleton%20Project%20Guess-a-Number/api.py  # noqa
+          https://github.com/udacity/FSND-P4-Design-A-Game/blob/master/Skeleton%20Project%20Guess-a-Number/api.py  # noqa
         """
         if User.query(User.name == request.user_name).get():
             raise endpoints.ConflictException(
