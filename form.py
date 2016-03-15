@@ -7,13 +7,13 @@ from protorpc import messages
 
 
 class UserForm(messages.Message):
-    """User Form"""
+    """Outbound - Represents a user."""
     name = messages.StringField(1, required=True)
     email = messages.StringField(2)
 
 
 class GameForm(messages.Message):
-    """Game Form"""
+    """Outbound - Represents a game's state."""
     urlsafe_key = messages.StringField(1, required=True)
     deck = messages.StringField(2, required=True)
     player_one = messages.StringField(3, required=True)
@@ -21,3 +21,9 @@ class GameForm(messages.Message):
     active_player = messages.StringField(5, required=True)
     game_over = messages.BooleanField(6, required=True)
     winner = messages.StringField(7)
+
+
+class NewGameForm(messages.Message):
+    """Inbound - Used to create a new game."""
+    player_one = messages.StringField(1, required=True)
+    player_two = messages.StringField(2, required=True)

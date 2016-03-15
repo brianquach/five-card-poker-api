@@ -11,7 +11,7 @@ from protorpc import message_types
 
 class StringMessage(messages.Message):
     """Outbound response string message"""
-    data = messages.StringField(1, required=True)
+    message = messages.StringField(1, required=True)
 
 USER_REQUEST = endpoints.ResourceContainer(
     user_name=messages.StringField(1),

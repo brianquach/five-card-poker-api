@@ -7,6 +7,10 @@ import endpoints
 
 from protorpc import remote
 
+from form import GameForm
+from form import NewGameForm
+from game import Poker
+from model import User
 from resource import StringMessage
 from resource import USER_REQUEST
 
@@ -25,7 +29,18 @@ class FiveCardPokerAPI(remote.Service):
         """Create a player."""
         return self._create_user(request)
 
-    def _create_user(request):
+    @endpoints.method(
+        request_message=NewGameForm,
+        response_message=GameForm,
+        path='game/new',
+        name='newGame',
+        http_method='POST'
+    )
+    def new_game(self, request):
+        """Start a game."""
+        return self._new_game(request)
+
+    def _create_user(self, request):
         """Create a player.
 
         Username must be unique.
@@ -39,7 +54,24 @@ class FiveCardPokerAPI(remote.Service):
             )
         user = User(name=request.user_name, email=request.email)
         user.put()
-        return StringMessage(message='User {} created!'.format(
-                request.user_name))
+        return StringMessage(
+            message='User {} created!'.format(request.user_name)
+        )
+
+    def _new_game(self, request):
+        player_one = User.query(User.name == request.player_one).get()
+        player_two = User.query(User.name == request.player_two).get()
+        err_msg = '{0} does not exist!'
+        if not player_one:
+            raise endpoints.NotFoundException(
+                err_msg.format(request.player_one)
+            )
+        if not player_two:
+            raise endpoints.NotFoundException(
+                err_msg.format(request.player_two)
+            )
+
+        game = Poker.new_game(player_one.key, player_two.key)
+        return game.to_form()
 
 api = endpoints.api_server([FiveCardPokerAPI])
