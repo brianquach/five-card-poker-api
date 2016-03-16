@@ -39,7 +39,7 @@ class FiveCardPokerAPI(remote.Service):
     def new_game(self, request):
         """Start a game."""
         return self._new_game(request)
-
+        
     def _create_user(self, request):
         """Create a player.
 
@@ -59,6 +59,7 @@ class FiveCardPokerAPI(remote.Service):
         )
 
     def _new_game(self, request):
+        """Starts a new five card poker game"""
         player_one = User.query(User.name == request.player_one).get()
         player_two = User.query(User.name == request.player_two).get()
         err_msg = '{0} does not exist!'
@@ -70,7 +71,6 @@ class FiveCardPokerAPI(remote.Service):
             raise endpoints.NotFoundException(
                 err_msg.format(request.player_two)
             )
-
         game = Poker.new_game(player_one.key, player_two.key)
         return game.to_form()
 

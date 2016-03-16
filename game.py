@@ -5,7 +5,11 @@ Licensed under MIT (https://github.com/brianquach/udacity-nano-fullstack-confere
 """
 import random
 
+from google.appengine.ext import ndb
+
+from enum import HandState
 from model import Game
+from model import Hand
 
 
 class Card(object):
@@ -47,7 +51,7 @@ class Deck(object):
         """Shuffles the card positions in the deck"""
         random.shuffle(self.cards)
 
-    def draw_cards(self, number_of_draws=1):
+    def draw(self, number_of_draws=1):
         """Draw card(s) from the top of the deck.
 
         Cannot draw more than the number of cards currently in the deck.
@@ -79,18 +83,57 @@ class Poker(object):
 
     Once each player has finished replacing their cards, each hand is then
     revealed. The player with the highest poker hand wins.
+
+    Args:
+      player_one: poker player; takes the first turn
+      player_two: poker player
     """
     @staticmethod
     def new_game(player_one, player_two):
         """Creates and returns a new game"""
+        game_id = Game.allocate_ids(size=1)[0]
+        game_key = ndb.Key(Game, game_id)
+        print game_key
         game = Game(
+            key=game_key,
             player_one=player_one,
             player_two=player_two,
-            active_player=player_one
+            active_player=player_one,
+            game_over=False
         )
         deck = Deck()
         deck.shuffle()
-        game.deck = deck.cards
-        #game.put()
 
+        # Deal out each player's starting hand
+
+        player_one_hand = deck.draw(5)
+        hand = Hand(
+            player=player_one,
+            game=game.key,
+            hand=player_one_hand,
+            state=str(HandState.STARTING)
+        )
+        hand.put()
+        game.player_one_hand = hand.key
+
+        player_two_hand = deck.draw(5)
+        hand = Hand(
+            player=player_two,
+            game=game.key,
+            hand=player_two_hand,
+            state=str(HandState.STARTING)
+        )
+        hand.put()
+        game.player_two_hand = hand.key
+
+        game.deck = deck.cards
+        game.put()
+
+        # Send email to each player notifying them of their respective hands
+        # and who is to go first.
+        
+        # taskqueue.add(url='/tasks/send_move_email',
+        #   params={'user_key': game.next_move.urlsafe(),
+        #           'game_key': game.key.urlsafe()})
+        
         return game
