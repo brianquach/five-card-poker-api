@@ -23,7 +23,7 @@ class User(ndb.Model):
     name = ndb.StringProperty(required=True)
     email = ndb.StringProperty()
 
-    def to_form():
+    def to_form(self):
         """Returns a form representation of the User"""
         form = UserForm(
             name=self.name,
@@ -53,14 +53,15 @@ class Game(ndb.Model):
     game_over = ndb.BooleanProperty(required=True, default=False)
     winner = ndb.KeyProperty()
 
-    def to_form():
+    def to_form(self):
         """Returns a form representation of the Game"""
         form = GameForm(
             deck=str(self.deck),
             player_one=self.player_one.get().name,
             player_two=self.player_two.get().name,
             active_player=self.active_player.get().name,
-            game_over=self.game_over
+            game_over=self.game_over,
+            urlsafe_key=self.key.urlsafe()
         )
         if self.winner:
             form.winner = self.winner.get().name
