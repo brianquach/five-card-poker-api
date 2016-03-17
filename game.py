@@ -139,5 +139,8 @@ class Poker(object):
                 'hand': str(player_one_hand)
             }
         )
-        
         return game
+
+    @staticmethod
+    def make_move(player):
+        return ['ACE', 'ACE', 'ACE', 'ACE', 'KING']

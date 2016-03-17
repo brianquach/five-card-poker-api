@@ -27,3 +27,9 @@ class NewGameForm(messages.Message):
     """Inbound - Used to create a new game."""
     player_one = messages.StringField(1, required=True)
     player_two = messages.StringField(2, required=True)
+
+
+class PlayerMoveForm(messages.Message):
+    """Inbound - Used to accept player move."""
+    player = messages.StringField(1, required=True)
+    game_urlsafe_key = messages.StringField(2, required=True)
