@@ -5,6 +5,7 @@ Licensed under MIT (https://github.com/brianquach/udacity-nano-fullstack-confere
 """
 import random
 
+from google.appengine.api import taskqueue
 from google.appengine.ext import ndb
 
 from enum import HandState
@@ -70,7 +71,6 @@ class Deck(object):
             '''
             return error_message.format(number_of_draws, cards_in_deck)
         cards = [self.cards.pop() for i in range(number_of_draws)]
-        print cards
         return cards
 
 
@@ -93,7 +93,7 @@ class Poker(object):
         """Creates and returns a new game"""
         game_id = Game.allocate_ids(size=1)[0]
         game_key = ndb.Key(Game, game_id)
-        print game_key
+        
         game = Game(
             key=game_key,
             player_one=player_one,
@@ -129,11 +129,15 @@ class Poker(object):
         game.deck = deck.cards
         game.put()
 
-        # Send email to each player notifying them of their respective hands
-        # and who is to go first.
-        
-        # taskqueue.add(url='/tasks/send_move_email',
-        #   params={'user_key': game.next_move.urlsafe(),
-        #           'game_key': game.key.urlsafe()})
+        # Send email to active player signaling the start of the game
+
+        taskqueue.add(
+            url='/tasks/send_move_email',
+            params={
+                'game_key': game.key.urlsafe(),
+                'user_key': game.active_player.urlsafe(),
+                'hand': str(player_one_hand)
+            }
+        )
         
         return game
