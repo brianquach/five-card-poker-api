@@ -27,9 +27,9 @@ class SendMoveEmail(webapp2.RequestHandler):
 
             It's your turn current turn to play five card poker! Choose the
             cards you want to replace, if any, and respond to us. After your
-            move, we will send you your new hand. Once your opponent does the
-            same the game will notify each player the winner; the player with
-            the best hand!
+            move, we will reveal your new hand. Once your opponent does the
+            same the game will notify each player the winner by email. May the
+            player with the best hand win!
 
             Here is your hand:
               {1}
