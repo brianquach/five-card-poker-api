@@ -36,6 +36,10 @@ class Card(object):
         self.value = self._get_card_value(name)
         self.id = self._get_card_id(name, suit)
 
+    def __repr__(self):
+        """Returns a string representing the card."""
+        return '{0} of {1}'.format(self.name, self.suit)
+
     def _get_card_value(self, name):
         """Gets value of a card based on the name.
 
@@ -84,7 +88,7 @@ class Card(object):
 
     def serialize(self):
         """Convert card into a JSON string."""
-        card_json = '{{\"name\": \'{0}\', \"suit\": \'{1}\'}}'.\
+        card_json = '{{"name": "{0}", "suit": "{1}"}}'.\
             format(self.name, self.suit)
         return card_json
 
@@ -146,6 +150,7 @@ class Deck(object):
         deck_json = '['
         for card in self.cards:
             deck_json += '{0},'.format(card.serialize())
+        deck_json = deck_json[:-1]
         deck_json += ']'
         return deck_json
 
@@ -182,21 +187,21 @@ class Poker(object):
 
         # Deal out each player's starting hand
 
-        player_one_hand = deck.draw(5)
+        player_one_hand = Poker.serialize_hand(deck.draw(5))
         hand = Hand(
             player=player_one,
             game=game.key,
-            hand=Poker.serialize_hand(player_one_hand),
+            hand=player_one_hand,
             state=str(HandState.STARTING)
         )
         hand.put()
         game.player_one_hand = hand.key
 
-        player_two_hand = deck.draw(5)
+        player_two_hand = Poker.serialize_hand(deck.draw(5))
         hand = Hand(
             player=player_two,
             game=game.key,
-            hand=Poker.serialize_hand(player_two_hand),
+            hand=player_two_hand,
             state=str(HandState.STARTING)
         )
         hand.put()
@@ -211,8 +216,7 @@ class Poker(object):
             url='/tasks/send_move_email',
             params={
                 'game_key': game.key.urlsafe(),
-                'user_key': game.active_player.urlsafe(),
-                'hand': str(player_one_hand)
+                'user_key': game.active_player.urlsafe()
             }
         )
         return game
@@ -227,5 +231,6 @@ class Poker(object):
         hand_json = '['
         for card in hand:
             hand_json += '{0},'.format(card.serialize())
+        hand_json = hand_json[:-1]
         hand_json += ']'
         return hand_json
