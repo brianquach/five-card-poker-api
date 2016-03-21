@@ -14,24 +14,81 @@ from model import Hand
 
 
 class Card(object):
-    """Represents the value of the different card types in a deck."""
-    two = 2
-    three = 3
-    four = 4
-    five = 5
-    six = 6
-    seven = 7
-    eight = 8
-    nine = 9
-    ten = 10
-    jack = 11
-    queen = 12
-    king = 13
-    ace = 14
+    """Represents a regular card from standard 52-card deck.
+
+    Card suits are Diamond, Hearts, Spades, and Clubs. Card names are Two,
+    Three, Four, Five, Six, Seven, Eight, Nine, Ten, Jack, Queen, King, and
+    Ace.
+
+    The cards value will be used to determine which card beats which and a
+    card's ID is what the player will use to let the game know which card(s)
+    he/she wants to exchange.
+
+    Attributes:
+      value: An integer value of a playing card.
+      name: A string of the card name.
+      suit: A string of the card suit.
+      card_id: A string identifying the card.
+    """
+    def __init__(self, name='joker', suit=None):
+        self.name = name
+        self.suit = suit
+        self.value = self._get_card_value(name)
+        self.id = self._get_card_id(name, suit)
+
+    def _get_card_value(self, name):
+        """Gets value of a card based on the name.
+
+        Args:
+          name: a string representing the name of the card.
+
+        Returns:
+          The value of a card in a standard 52 card deck. If the card name
+          cannot be found, the vaue of the card will be 0.
+
+        Raises:
+          KeyError: An error occured trying to find the value of a card.
+        """
+        try:
+            card_values = {
+                'joker': 0,
+                'two': 2,
+                'three': 3,
+                'four': 4,
+                'five': 5,
+                'six': 6,
+                'seven': 7,
+                'eight': 8,
+                'nine': 9,
+                'ten': 10,
+                'jack': 11,
+                'queen': 12,
+                'king': 13,
+                'ace': 14
+            }
+            return card_values[name]
+        except KeyError:
+            return 0
+
+    def _get_card_Id(self, name, suit):
+        """Creates a card's ID.
+
+        Args:
+          name: A string of the card name.
+          suit: A string of the card suit.
+
+        Returns:
+          A card's ID created from the card name and suit.
+        """
+        return '{0}_{1}'.format(suit, name)
 
 
 class Deck(object):
-    """Represents a collection of cards."""
+    """Represents a collection of cards.
+
+    Attributes:
+      cards: a list of Cards.
+    """
     def __init__(self, cards=None):
         self.cards = cards
         if self.cards is None:
@@ -40,12 +97,17 @@ class Deck(object):
     def _get_standard_deck(self):
         """Returns the standard 52 card deck unsorted"""
         cards = []
-        types_of_cards = [
+        names_of_cards = [
             'two', 'three', 'four', 'five', 'six', 'seven', 'eight',
             'nine', 'ten', 'jack', 'queen', 'king', 'ace'
         ]
-        for card_type in types_of_cards:
-            cards.extend([card_type for i in range(4)])
+        suit = ['spade', 'heart', 'diamond', 'club']
+        for card_name in names_of_cards:
+            cards.extend(
+                [
+                    Card(name=card_name, suit=suit[i]) for i in range(4)
+                ]
+            )
         return cards
 
     def shuffle(self):
@@ -93,7 +155,7 @@ class Poker(object):
         """Creates and returns a new game"""
         game_id = Game.allocate_ids(size=1)[0]
         game_key = ndb.Key(Game, game_id)
-        
+
         game = Game(
             key=game_key,
             player_one=player_one,

@@ -80,7 +80,7 @@ class Hand(ndb.Model):
       game: Key representing the game from where the player had their hand
         delt.
       hand: A list representing the cards in the player's hand.
-      state: Enum representing the current hand state in the game. 
+      state: Enum representing the current hand state in the game.
     """
     player = ndb.KeyProperty(required=True, kind='User')
     game = ndb.KeyProperty(required=True, kind='Game')
