@@ -170,17 +170,18 @@ class Poker(object):
       player_two: poker player
     """
     @staticmethod
-    def new_game(player_one, player_two):
+    @ndb.transactional(xg=True)
+    def new_game(player_one, player_two, game_id):
         """Creates and returns a new game.
 
         Args:
           player_one: A key representing player one.
           player_two: A key representing player two.
+          game_id: A string representing a game_id for generating a Game.key.
 
         Returns:
           A game detailing the players, the active player, and the deck.
         """
-        game_id = Game.allocate_ids(size=1)[0]
         game_key = ndb.Key(Game, game_id)
 
         game = Game(
@@ -223,7 +224,8 @@ class Poker(object):
             params={
                 'game_key': game.key.urlsafe(),
                 'user_key': game.active_player.urlsafe()
-            }
+            },
+            transactional=True
         )
         return game
 

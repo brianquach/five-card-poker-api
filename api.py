@@ -66,7 +66,8 @@ class FiveCardPokerAPI(remote.Service):
             raise endpoints.NotFoundException(
                 err_msg.format(request.player_two)
             )
-        game = Poker.new_game(player_one.key, player_two.key)
+        game_id = Game.allocate_ids(size=1)[0]
+        game = Poker.new_game(player_one.key, player_two.key, game_id)
         return game.to_form()
 
     @endpoints.method(
