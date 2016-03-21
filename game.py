@@ -70,7 +70,7 @@ class Card(object):
         except KeyError:
             return 0
 
-    def _get_card_Id(self, name, suit):
+    def _get_card_id(self, name, suit):
         """Creates a card's ID.
 
         Args:
