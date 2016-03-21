@@ -60,7 +60,6 @@ class Game(ndb.Model):
     def to_form(self):
         """Returns a form representation of the Game."""
         form = GameForm(
-            deck=str(self.deck),
             player_one=self.player_one.get().name,
             player_two=self.player_two.get().name,
             active_player=self.active_player.get().name,

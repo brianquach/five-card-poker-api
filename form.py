@@ -15,12 +15,11 @@ class UserForm(messages.Message):
 class GameForm(messages.Message):
     """Outbound - Represents a game's state."""
     urlsafe_key = messages.StringField(1, required=True)
-    deck = messages.StringField(2, required=True)
-    player_one = messages.StringField(3, required=True)
-    player_two = messages.StringField(4, required=True)
-    active_player = messages.StringField(5, required=True)
-    game_over = messages.BooleanField(6, required=True)
-    winner = messages.StringField(7)
+    player_one = messages.StringField(2, required=True)
+    player_two = messages.StringField(3, required=True)
+    active_player = messages.StringField(4, required=True)
+    game_over = messages.BooleanField(5, required=True)
+    winner = messages.StringField(6)
 
 
 class NewGameForm(messages.Message):
