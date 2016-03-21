@@ -48,7 +48,7 @@ class Game(ndb.Model):
     Code Citation:
       https://github.com/udacity/FSND-P4-Design-A-Game/blob/master/Sample%20Project%20tic-tac-toe/models.py  # noqa
     """
-    deck = ndb.PickleProperty(required=True)
+    deck = ndb.JsonProperty(required=True)
     player_one = ndb.KeyProperty(required=True, kind='User')
     player_one_hand = ndb.KeyProperty(required=True, kind='Hand')
     player_two = ndb.KeyProperty(required=True, kind='User')
@@ -84,5 +84,5 @@ class Hand(ndb.Model):
     """
     player = ndb.KeyProperty(required=True, kind='User')
     game = ndb.KeyProperty(required=True, kind='Game')
-    hand = ndb.PickleProperty(required=True)
+    hand = ndb.JsonProperty(required=True)
     state = ndb.StringProperty(required=True, default='STARTING')

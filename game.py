@@ -82,6 +82,12 @@ class Card(object):
         """
         return '{0}_{1}'.format(suit, name)
 
+    def serialize(self):
+        """Convert card into a JSON string."""
+        card_json = '{{\"name\": \'{0}\', \"suit\": \'{1}\'}}'.\
+            format(self.name, self.suit)
+        return card_json
+
 
 class Deck(object):
     """Represents a collection of cards.
@@ -95,7 +101,7 @@ class Deck(object):
             self.cards = self._get_standard_deck()
 
     def _get_standard_deck(self):
-        """Returns the standard 52 card deck unsorted"""
+        """Returns the standard 52 card deck unsorted."""
         cards = []
         names_of_cards = [
             'two', 'three', 'four', 'five', 'six', 'seven', 'eight',
@@ -111,7 +117,7 @@ class Deck(object):
         return cards
 
     def shuffle(self):
-        """Shuffles the card positions in the deck"""
+        """Shuffles the card positions in the deck."""
         random.shuffle(self.cards)
 
     def draw(self, number_of_draws=1):
@@ -135,6 +141,14 @@ class Deck(object):
         cards = [self.cards.pop() for i in range(number_of_draws)]
         return cards
 
+    def serialize(self):
+        """Convert deck of cards into a JSON string."""
+        deck_json = '['
+        for card in self.cards:
+            deck_json += '{0},'.format(card.serialize())
+        deck_json += ']'
+        return deck_json
+
 
 class Poker(object):
     """Operates the five card poker game mechanics.
@@ -152,7 +166,7 @@ class Poker(object):
     """
     @staticmethod
     def new_game(player_one, player_two):
-        """Creates and returns a new game"""
+        """Creates and returns a new game."""
         game_id = Game.allocate_ids(size=1)[0]
         game_key = ndb.Key(Game, game_id)
 
@@ -172,7 +186,7 @@ class Poker(object):
         hand = Hand(
             player=player_one,
             game=game.key,
-            hand=player_one_hand,
+            hand=Poker.serialize_hand(player_one_hand),
             state=str(HandState.STARTING)
         )
         hand.put()
@@ -182,13 +196,13 @@ class Poker(object):
         hand = Hand(
             player=player_two,
             game=game.key,
-            hand=player_two_hand,
+            hand=Poker.serialize_hand(player_two_hand),
             state=str(HandState.STARTING)
         )
         hand.put()
         game.player_two_hand = hand.key
 
-        game.deck = deck.cards
+        game.deck = deck.serialize()
         game.put()
 
         # Send email to active player signaling the start of the game
@@ -206,3 +220,12 @@ class Poker(object):
     @staticmethod
     def make_move(player):
         return ['ACE', 'ACE', 'ACE', 'ACE', 'KING']
+
+    @staticmethod
+    def serialize_hand(hand):
+        """Serialize player's hand of cards into JSON."""
+        hand_json = '['
+        for card in hand:
+            hand_json += '{0},'.format(card.serialize())
+        hand_json += ']'
+        return hand_json
