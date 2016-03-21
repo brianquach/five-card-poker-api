@@ -39,8 +39,6 @@ class Game(ndb.Model):
       deck: List of cards representing the deck.
       player_one: Key representing player one in the game.
       player_two: Key representing player two in the game.
-      player_one_hand: Key representing player one's current hand.
-      player_two_hand: Key representing player two's current hand.
       active_player: Key representing current player's turn.
       game_over: Boolean if game is completed or not.
       winner: Key representing player who has won the game.
@@ -50,9 +48,7 @@ class Game(ndb.Model):
     """
     deck = ndb.JsonProperty(required=True)
     player_one = ndb.KeyProperty(required=True, kind='User')
-    player_one_hand = ndb.KeyProperty(required=True, kind='Hand')
     player_two = ndb.KeyProperty(required=True, kind='User')
-    player_two_hand = ndb.KeyProperty(required=True, kind='Hand')
     active_player = ndb.KeyProperty(required=True)
     game_over = ndb.BooleanProperty(required=True, default=False)
     winner = ndb.KeyProperty()

@@ -195,7 +195,6 @@ class Poker(object):
             state=str(HandState.STARTING)
         )
         hand.put()
-        game.player_one_hand = hand.key
 
         player_two_hand = Poker.serialize_hand(deck.draw(5))
         hand = Hand(
@@ -205,7 +204,6 @@ class Poker(object):
             state=str(HandState.STARTING)
         )
         hand.put()
-        game.player_two_hand = hand.key
 
         game.deck = deck.serialize()
         game.put()
