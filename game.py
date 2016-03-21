@@ -171,7 +171,15 @@ class Poker(object):
     """
     @staticmethod
     def new_game(player_one, player_two):
-        """Creates and returns a new game."""
+        """Creates and returns a new game.
+
+        Args:
+          player_one: A key representing player one.
+          player_two: A key representing player two.
+
+        Returns:
+          A game detailing the players, the active player, and the deck.
+        """
         game_id = Game.allocate_ids(size=1)[0]
         game_key = ndb.Key(Game, game_id)
 
@@ -220,7 +228,34 @@ class Poker(object):
         return game
 
     @staticmethod
-    def make_move(player):
+    def make_move(game, player, card_ids):
+        """Record and respond to player's move.
+
+        Record player card exchanges if any requeted. An empty card_ids means
+        the player does not want to exchange any of his/her cards.
+
+        Args:
+          game: An entity representing the game state.
+          player: An entity representing the active player.
+          card_ids: A list with the cards the player wants to exchange.
+
+        Returns:
+          The player's final hand.
+        """
+        current_hand = Hand.query(
+            ndb.AND(Hand.game == game.key, Hand.player == player.key)
+        ).get()
+        final_hand = current_hand.hand
+        # if len(card_ids) > 0:
+        #     get_new_cards()
+
+        final_hand = Hand(
+            player=player.key,
+            game=game.key,
+            hand=final_hand,
+            state=str(HandState.ENDING)
+        )
+        final_hand.put()
         return ['ACE', 'ACE', 'ACE', 'ACE', 'KING']
 
     @staticmethod

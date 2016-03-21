@@ -31,4 +31,5 @@ class NewGameForm(messages.Message):
 class PlayerMoveForm(messages.Message):
     """Inbound - Used to accept player move."""
     player = messages.StringField(1, required=True)
-    game_urlsafe_key = messages.StringField(2, required=True)
+    card_ids = messages.StringField(2, repeated=True)
+    game_urlsafe_key = messages.StringField(3, required=True)

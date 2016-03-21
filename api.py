@@ -92,7 +92,7 @@ class FiveCardPokerAPI(remote.Service):
             raise endpoints.ForbiddenException(
                 'It is not your turn yet {0}'.format(request.player)
             )
-        hand = Poker.make_move(player)
+        hand = Poker.make_move(game, player, request.card_ids)
         return StringMessage(
             message='Your move has been made here is your final hand: {0}. '
                     'Good luck!'.format(str(hand))
