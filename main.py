@@ -51,7 +51,7 @@ Hi {0}!
 
 It's your turn current turn to play five card poker! Choose the cards you want
 to replace, if any, and respond to us. After your move, we will reveal your new
-hand. Once your opponent does the same the game will notify each player the
+hand. After each player makes their move, the game will notify each player the
 winner by email. May the player with the best hand win!
 
 The game key is:

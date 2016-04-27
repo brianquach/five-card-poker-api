@@ -3,6 +3,8 @@
 Copyright 2016 Brian Quach
 Licensed under MIT (https://github.com/brianquach/udacity-nano-fullstack-conference/blob/master/LICENSE)  # noqa
 """
+import endpoints
+import json
 import random
 
 from google.appengine.api import taskqueue
@@ -35,6 +37,14 @@ class Card(object):
         self.suit = suit
         self.value = self._get_card_value(name)
         self.id = self._get_card_id(name, suit)
+
+    @classmethod
+    def create_from_id(cls, card_id=None):
+        if card_id is not None:
+            tokens = card_id.split('_')
+            suit = tokens[0]
+            name = tokens[1]
+            return cls(name, suit)
 
     def __repr__(self):
         """Returns a string representing the card."""
@@ -103,6 +113,15 @@ class Deck(object):
         self.cards = cards
         if self.cards is None:
             self.cards = self._get_standard_deck()
+
+    @classmethod
+    def construct_json_deck(cls, json_deck=None):
+        if json_deck is not None:
+            cards = json.loads(json_deck)
+            cards = [
+                Card(name=card['name'], suit=card['suit']) for card in cards
+            ]
+            return cls(cards)
 
     def _get_standard_deck(self):
         """Returns the standard 52 card deck unsorted."""
@@ -243,22 +262,28 @@ class Poker(object):
 
         Returns:
           The player's final hand.
+
+        Raises:
+          ForbiddenException: Player is trying to exchange more than the
+            max hand size; 5 cards.
         """
         current_hand = Hand.query(
             ndb.AND(Hand.game == game.key, Hand.player == player.key)
         ).get()
-        final_hand = current_hand.hand
-        # if len(card_ids) > 0:
-        #     get_new_cards()
+        current_hand = Poker.load_player_hand(current_hand.hand)
+        deck = Deck.construct_json_deck(game.deck)
 
-        final_hand = Hand(
-            player=player.key,
-            game=game.key,
-            hand=final_hand,
-            state=str(HandState.ENDING)
-        )
-        final_hand.put()
-        return ['ACE', 'ACE', 'ACE', 'ACE', 'KING']
+        if len(card_ids) > 0:
+            if len(card_ids) < 6:
+                final_hand = Poker.get_new_cards(deck, current_hand, card_ids)
+            else:
+                raise endpoints.ForbiddenException(
+                    '''It is not possible to exchange more cards than your hand
+                     size'''
+                )
+
+        Poker.save_game_state(game, deck, player, final_hand)
+        return final_hand
 
     @staticmethod
     def serialize_hand(hand):
@@ -269,3 +294,97 @@ class Poker(object):
         hand_json = hand_json[:-1]
         hand_json += ']'
         return hand_json
+
+    @staticmethod
+    def get_new_cards(deck, current_hand, card_ids):
+        """Exchange the cards the player has selected for new cards.
+
+        Player must have the card they want to exchange. Cards must be delt
+        from the deck the game started off with.
+
+        Args:
+          deck: the game's ndrawn cards.
+          current_hand: the cards the player is currently holding.
+          card_ids: the card ids of the cards the player wants to exchange.
+
+        Returns:
+          The final state of the player's hand after the desired cards have
+          been switched for new ones.
+        """
+        cards_to_remove = []
+        for card_id in card_ids:
+            card = Poker.is_card_id_valid(current_hand, card_id)
+            if card is None:
+                raise endpoints.NotFoundException(
+                    'Player does not have a card with ID: {0}'.format(card_id)
+                )
+            else:
+                current_hand.remove(card)
+
+        number_of_cards_to_draw = len(card_ids)
+        new_cards = deck.draw(number_of_cards_to_draw)
+        current_hand.extend(new_cards)
+        return current_hand
+
+    @staticmethod
+    def is_card_id_valid(current_hand, selected_card_id):
+        """Validate card ids that player is requesting to exchange.
+
+        Args:
+          current_hand: the cards the player is currently holding.
+          selected_card_id: the card id of the card the player wants to
+            exchange.
+
+        Returns:
+          The card that is being removed from the player's hand. If the card
+          cannot be found then None will be returned.
+        """
+        is_valid = False
+        for card in current_hand:
+            is_valid = card.id == selected_card_id
+            if is_valid:
+                return card
+        return None
+
+    @staticmethod
+    def load_player_hand(hand):
+        """Convert the player's hand from JSON into a list of cards objects."""
+        cards = json.loads(hand)
+        return [Card(name=card['name'], suit=card['suit']) for card in cards]
+
+    @staticmethod
+    @ndb.transactional(xg=True)
+    def save_game_state(game, deck, player, hand):
+        """Save the state of the game after the player has made a move.
+
+        Args:
+          game: current game the player is playing in.
+          deck: the deck state after the player has drawn cards for the card_id
+            exchange phase.
+          player: the active player.
+          hand: the final hand the player has after the desired cards have been
+            replaced.
+        """
+        hand = Poker.serialize_hand(hand)
+        final_hand = Hand(
+            player=player.key,
+            game=game.key,
+            hand=hand,
+            state=str(HandState.ENDING)
+        )
+        final_hand.put()
+
+        game.deck = deck.serialize()
+        if game.player_one == game.active_player:
+            game.active_player = game.player_two
+        game.put()
+
+        if not game.game_over:
+            taskqueue.add(
+                url='/tasks/send_move_email',
+                params={
+                    'game_key': game.key.urlsafe(),
+                    'user_key': game.active_player.urlsafe()
+                },
+                transactional=True
+            )
