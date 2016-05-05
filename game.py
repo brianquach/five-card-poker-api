@@ -295,7 +295,19 @@ class Poker(object):
                      size'''
                 )
 
-        Poker.save_game_state(game, deck, player, final_hand)
+        if game.active_player == game.player_one:
+            Poker.save_turn_one_game_state(game, deck, final_hand)
+        else:
+            player_one_hand = Hand.query(
+                ndb.AND(Hand.game == game.key, Hand.player == game.player_one)
+            ).get()
+            player_one_hand = Poker.load_player_hand(player_one_hand.hand)
+            Poker.save_turn_two_game_state(
+                game,
+                deck,
+                final_hand,
+                player_one_hand
+            )
 
         return final_hand
 
@@ -368,65 +380,87 @@ class Poker(object):
 
     @staticmethod
     @ndb.transactional(xg=True)
-    def save_game_state(game, deck, player, hand):
-        """Save the state of the game after the player has made a move.
+    def save_turn_one_game_state(game, deck, player_one_hand):
+        """Save the state of the game after player one has made a move.
 
         Args:
           game: current game the player is playing in.
           deck: the deck state after the player has drawn cards for the card_id
             exchange phase.
-          player: the active player.
           hand: the final hand the player has after the desired cards have been
             replaced.
         """
-        hand = Poker.serialize_hand(hand)
+
+        # Save player one's final hand
+
+        hand = Poker.serialize_hand(player_one_hand)
         final_hand = Hand(
-            player=player.key,
+            player=player.player_one,
             game=game.key,
             hand=hand,
             state=str(HandState.ENDING)
         )
         final_hand.put()
 
-        if game.active_player == game.player_one:
-            game.active_player = game.player_two
-            taskqueue.add(
-                url='/tasks/send_move_email',
-                params={
-                    'game_key': game.key.urlsafe(),
-                    'user_key': game.active_player.urlsafe()
-                },
-                transactional=True
-            )
-            game.deck = deck.serialize()
-            game.put()
+        game.active_player = game.player_two
+        game.deck = deck.serialize()
+        game.put()
+        taskqueue.add(
+            url='/tasks/send_move_email',
+            params={
+                'game_key': game.key.urlsafe(),
+                'user_key': game.active_player.urlsafe()
+            },
+            transactional=True
+        )
+
+    @staticmethod
+    @ndb.transactional(xg=True)
+    def save_turn_two_game_state(game, deck, player_two_hand, player_one_hand):
+        """Save the state of the game after player two has made a move.
+
+        This should signal the end of the game.
+
+        Args:
+          game: current game the player is playing in.
+          deck: the deck state after the player has drawn cards for the card_id
+            exchange phase.
+          player_two_hand: the final hand player two has after the desired
+            cards have been replaced.
+          player_one_hand: player one's final hand.
+        """
+
+        # Save player two's final hand
+
+        hand = Poker.serialize_hand(player_two_hand)
+        final_hand = Hand(
+            player=game.player_two,
+            game=game.key,
+            hand=hand,
+            state=str(HandState.ENDING)
+        )
+        final_hand.put()
+
+        # Check game outcome and send email to players with results.
+        
+        game_outcome = Poker.game_outcome(player_one_hand, player_two_hand)
+        game.game_over = True
+        game.active_player = None
+        if game_outcome == 0:
+            game.winner = None
+        elif game_outcome == 1:
+            game.winner = game.player_one
         else:
-            player_one_hand = Hand.query(
-                ndb.AND(Hand.game == game.key, Hand.player == game.player_one)
-            ).get()
-            player_one_hand = Poker.load_player_hand(player_one_hand.hand)
-            player_two_hand = final_hand
-
-            # Check game outcome and send email to players with results.
-
-            game_outcome = Poker.game_outcome(player_one_hand, player_two_hand)
-            game.game_over = True
-            game.active_player = None
-            if game_outcome == 0:
-                game.winner = None
-            elif game_outcome == 1:
-                game.winner = game.player_one
-            else:
-                game.winner = game.player_two
-            game.deck = deck.serialize()
-            game.put()
-            taskqueue.add(
-                url='/tasks/send_game_result_email',
-                params={
-                    'game_key': game.key.urlsafe()
-                },
-                transactional=True
-            )
+            game.winner = game.player_two
+        game.deck = deck.serialize()
+        game.put()
+        taskqueue.add(
+            url='/tasks/send_game_result_email',
+            params={
+                'game_key': game.key.urlsafe()
+            },
+            transactional=True
+        )
 
     @staticmethod
     def game_outcome(player_one_hand, player_two_hand):

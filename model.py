@@ -49,7 +49,7 @@ class Game(ndb.Model):
     deck = ndb.JsonProperty(required=True)
     player_one = ndb.KeyProperty(required=True, kind='User')
     player_two = ndb.KeyProperty(required=True, kind='User')
-    active_player = ndb.KeyProperty(required=True)
+    active_player = ndb.KeyProperty()
     game_over = ndb.BooleanProperty(required=True, default=False)
     winner = ndb.KeyProperty()
 
