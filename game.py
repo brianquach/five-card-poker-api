@@ -3,6 +3,7 @@
 Copyright 2016 Brian Quach
 Licensed under MIT (https://github.com/brianquach/udacity-nano-fullstack-conference/blob/master/LICENSE)  # noqa
 """
+from collections import Counter
 import endpoints
 import json
 import random
@@ -184,6 +185,18 @@ class Poker(object):
     Once each player has finished replacing their cards, each hand is then
     revealed. The player with the highest poker hand wins.
 
+    Poker hand rankings (greatest to least):
+      1) Royal Flush
+      2) Straight Flush
+      3) Four of a Kind
+      4) Full House
+      5) Flush
+      6) Straight
+      7) Three of a Kind
+      8) Two Pair
+      9) Pair
+      10) High Card
+
     Args:
       player_one: poker player; takes the first turn
       player_two: poker player
@@ -267,15 +280,15 @@ class Poker(object):
           ForbiddenException: Player is trying to exchange more than the
             max hand size; 5 cards.
         """
-        current_hand = Hand.query(
+        final_hand = Hand.query(
             ndb.AND(Hand.game == game.key, Hand.player == player.key)
         ).get()
-        current_hand = Poker.load_player_hand(current_hand.hand)
+        final_hand = Poker.load_player_hand(final_hand.hand)
         deck = Deck.construct_json_deck(game.deck)
 
         if len(card_ids) > 0:
             if len(card_ids) < 6:
-                final_hand = Poker.get_new_cards(deck, current_hand, card_ids)
+                final_hand = Poker.get_new_cards(deck, final_hand, card_ids)
             else:
                 raise endpoints.ForbiddenException(
                     '''It is not possible to exchange more cards than your hand
@@ -283,6 +296,7 @@ class Poker(object):
                 )
 
         Poker.save_game_state(game, deck, player, final_hand)
+
         return final_hand
 
     @staticmethod
@@ -374,12 +388,8 @@ class Poker(object):
         )
         final_hand.put()
 
-        game.deck = deck.serialize()
-        if game.player_one == game.active_player:
+        if game.active_player == game.player_one:
             game.active_player = game.player_two
-        game.put()
-
-        if not game.game_over:
             taskqueue.add(
                 url='/tasks/send_move_email',
                 params={
@@ -388,3 +398,314 @@ class Poker(object):
                 },
                 transactional=True
             )
+            game.deck = deck.serialize()
+            game.put()
+        else:
+            player_one_hand = Hand.query(
+                ndb.AND(Hand.game == game.key, Hand.player == game.player_one)
+            ).get()
+            player_one_hand = Poker.load_player_hand(player_one_hand.hand)
+            player_two_hand = final_hand
+
+            # Check game outcome and send email to players with results.
+
+            game_outcome = Poker.game_outcome(player_one_hand, player_two_hand)
+            game.game_over = True
+            game.active_player = None
+            if game_outcome == 0:
+                game.winner = None
+            elif game_outcome == 1:
+                game.winner = game.player_one
+            else:
+                game.winner = game.player_two
+            game.deck = deck.serialize()
+            game.put()
+            taskqueue.add(
+                url='/tasks/send_game_result_email',
+                params={
+                    'game_key': game.key.urlsafe()
+                },
+                transactional=True
+            )
+
+    @staticmethod
+    def game_outcome(player_one_hand, player_two_hand):
+        """Compare player hands and determine the outcome of the poker game.
+
+        Args:
+          player_one_hand: first player's hand.
+          player_two_hand: second player's hand.
+
+        Returns:
+          An integer indicating the outcome:
+            Game tie: 0
+            Player One Wins: 1
+            Player Two Wins: 2
+        """
+        def sort_by_card_value(card):
+            """Sort key by Card value."""
+            return card.value
+
+        def is_ace_low(lowest_card, highest_card):
+            """Determine if Ace is used as the lowest card in a straight."""
+            return (lowest_card.value == 2 and highest_card.value == 14)
+
+        def are_cards_same_suit(hand):
+            """Check if there is a flush."""
+            is_same_suit = True
+            suit = None
+            for card in hand:
+                if (suit is None):
+                    suit = card.suit
+                elif (suit == card.suit):
+                    is_same_suit = True
+                else:
+                    is_same_suit = False
+            return is_same_suit
+
+        def are_cards_in_consecutive_order(hand):
+            """Check if there is a straight.
+
+            Ace low rule: if the lowest card is a Two and the highest card is
+            an Ace then temporarily assign a value of 1 to the Ace because a
+            straight can be created from Ace, Two, Three, Four, Five.
+            """
+            is_consecutive_order = True
+            sorted_hand = sorted(hand, key=sort_by_card_value)
+            index = 0
+            lowest_card = sorted_hand[0]
+            highest_card = sorted_hand[-1]
+            is_ace_low_rule = is_ace_low(lowest_card, highest_card)
+            if (is_ace_low_rule):
+                highest_card.value = 1
+                sorted_hand = sorted(hand, key=sort_by_card_value)
+                lowest_card = sorted_hand[0]
+
+            for card in sorted_hand:
+                is_consecutive_order = (
+                    (card.value - lowest_card.value) == index
+                )
+                if (not is_consecutive_order):
+                    break
+                index += 1
+
+            # Set back the original value of the Ace card
+
+            if is_ace_low_rule:
+                lowest_card.value = 14
+
+            return is_consecutive_order
+
+        def determine_hand_type(hand):
+            """Determine the type of a player's hand.
+
+            Number left of the hyphen is the score of the hand.
+
+            Poker hand rankings:
+              10 - Royal Flush
+              9 - Straight Flush
+              8 - Four of a Kind
+              7 - Full House
+              6 - Flush
+              5 - Straight
+              4 - Three of a Kind
+              3 - Two Pair
+              2 - Pair
+              1 - High Card
+
+            Args:
+              hand: the collection of five cards to score.
+
+            Returns:
+              A number representing the value of the hand (higher is better).
+            """
+            sorted_hand = sorted(hand, key=sort_by_card_value)
+
+            # Check card frequencies to determine groupings (pairs, triple,
+            # etc).
+
+            card_frequencies = Counter([card.value for card in sorted_hand])
+            has_four_of_kind = False
+            has_three_of_kind = False
+            has_two_pairs = False
+            has_pair = False
+            for card_frequency in card_frequencies.most_common():
+                card_value = card_frequency[0]
+                card_count = card_frequency[1]
+                if (card_count == 4):
+                    has_four_of_kind = True
+                elif (card_count == 3):
+                    has_three_of_kind = True
+                elif (card_count == 2):
+                    if (has_pair):
+                        has_two_pairs = True
+                    else:
+                        has_pair = True
+
+            is_flush = are_cards_same_suit(sorted_hand)
+            is_straight = are_cards_in_consecutive_order(sorted_hand)
+
+            if (is_flush and is_straight):
+                lowest_card = sorted_hand[0]
+                highest_card = sorted_hand[-1]
+                is_ace_low_rule = is_ace_low(lowest_card, highest_card)
+
+                # If highest card is an Ace then it's a Royal Flush, otherwise
+                # it's a straight flush.
+
+                if (highest_card.value == 14 and not is_ace_low_rule):
+                    return 10  # Royal Flush
+                else:
+                    return 9  # Straight Flush
+            elif (has_four_of_kind):
+                return 8  # Four of a Kind
+            elif (has_three_of_kind and has_pair):
+                return 7  # Full House
+            elif (is_flush):
+                return 6  # Flush
+            elif (is_straight):
+                return 5  # Straight
+            elif (has_three_of_kind):
+                return 4  # Three of a Kind
+            elif (has_two_pairs):
+                return 3  # Two Pairs
+            elif (has_pair):
+                return 2  # Pair
+            else:
+                return 1  # High Card
+
+        def determine_higher_hand_value(
+                player_one_hand, player_two_hand, hand_score):
+            """Determine higher hand value of hands with same hand score.
+
+            If both the player have the same hand type (score), whoever has the
+            higher hand value wins.
+
+            Args:
+              player_one_hand: player one's hand.
+              player_two_hand: player two's hand.
+              hand_score: the type of hand both players are holding.
+
+            Returns:
+              A number representing the player with higher hand value:
+                Tie: 0.
+                Player one has higher value: 1.
+                Player two has higher value: 2.
+            """
+            def highest_card_check(
+                    p1_highest_card_value, p2_highest_card_value):
+                """Determine tie breaker by high card value."""
+                if (p1_highest_card_value == p2_highest_card_value):
+                    return 0
+                if (p1_highest_card_value > p2_highest_card_value):
+                    return 1
+                else:
+                    return 2
+
+            def most_common_card_check(
+                    p1_most_common_card_value, p2_most_common_card_value):
+                """Determine tie breaker by most common card value."""
+                if (p1_most_common_card_value > p2_most_common_card_value):
+                    return 1
+                else:
+                    return 2
+
+            p1_card_counter = Counter(
+                [card.value for card in player_one_hand]
+            )
+            p1_card_frequencies = p1_card_counter.most_common()
+            p1_sorted_hand = sorted(player_one_hand, key=sort_by_card_value)
+            p1_lowest_card = p1_sorted_hand[0]
+            p1_highest_card = p1_sorted_hand[-1]
+            is_p1_ace_low = is_ace_low(p1_lowest_card, p1_highest_card)
+            if (is_p1_ace_low):
+                p1_highest_card.value = 1
+                p1_sorted_hand = sorted(p1_sorted_hand, key=sort_by_card_value)
+                p1_highest_card = p1_sorted_hand[-1]
+
+            p2_card_counter = Counter(
+                [card.value for card in player_two_hand]
+            )
+            p2_card_frequencies = p2_card_counter.most_common()
+            p2_sorted_hand = sorted(player_two_hand, key=sort_by_card_value)
+            p2_lowest_card = p2_sorted_hand[0]
+            p2_highest_card = p2_sorted_hand[-1]
+            is_p2_ace_low = is_ace_low(p2_lowest_card, p2_highest_card)
+            if (is_p2_ace_low):
+                p2_highest_card.value = 1
+                p2_sorted_hand = sorted(p2_sorted_hand, key=sort_by_card_value)
+                p2_highest_card = p2_sorted_hand[-1]
+
+            # Straight Flush, Flush, Straight, High Card
+            if (hand_score in [9, 6, 5, 1]):
+                return highest_card_check(
+                    p1_highest_card.value, p2_highest_card.value)
+            # Four of a Kind, Full House, Three of a Kind
+            elif (hand_score in [8, 7, 4]):
+                return most_common_card_check(
+                    p1_card_frequencies[0][0], p2_card_frequencies[0][0])
+            # Two Pairs
+            elif (hand_score == 3):
+                def sort_freq(card):
+                    """Use card value in card frequency tuple to sort."""
+                    return card[0]
+
+                p1_card_frequencies = p1_card_counter.most_common(2)
+                p1_card_frequencies = sorted(
+                    p1_card_frequencies, key=sort_freq)
+                p1_high_pair = p1_card_frequencies[1]
+                p1_low_pair = p1_card_frequencies[0]
+                p2_card_frequencies = p2_card_counter.most_common(2)
+                p2_card_frequencies = sorted(
+                    p2_card_frequencies, key=sort_freq)
+                p2_high_pair = p2_card_frequencies[1]
+                p2_low_pair = p2_card_frequencies[0]
+
+                if (p1_high_pair[0] == p2_high_pair[0]):
+                    if (p1_low_pair[0] == p2_low_pair[0]):
+                        return 0
+                    elif (p1_low_pair[0] > p2_low_pair[0]):
+                        return 1
+                    else:
+                        return 2
+                elif (p1_high_pair[0] > p2_high_pair[0]):
+                    return 1
+                else:
+                    return 2
+            # Pair
+            elif (hand_score == 2):
+                p1_pair = p1_card_frequencies[0]
+                p2_pair = p2_card_frequencies[0]
+
+                p1_single_cards = [c[0] for c in p1_card_frequencies[1:]]
+                p1_single_cards = sorted(p1_single_cards)
+                p1_highest_card_value = p1_single_cards[-1]
+                p2_single_cards = [c[0] for c in p2_card_frequencies[1:]]
+                p2_single_cards = sorted(p2_single_cards)
+                p2_highest_card_value = p2_single_cards[-1]
+
+                if (p1_pair[0] == p2_pair[0]):
+                    if (p1_highest_card_value == p2_highest_card_value):
+                        return 0
+                    elif (p1_highest_card_value > p2_highest_card_value):
+                        return 1
+                    else:
+                        return 2
+                elif (p1_pair[0] > p2_pair[0]):
+                    return 1
+                else:
+                    return 2
+            # Royal Flush
+            else:
+                return 0
+
+        p1_hand_type = determine_hand_type(player_one_hand)
+        p2_hand_type = determine_hand_type(player_two_hand)
+
+        if (p1_hand_type > p2_hand_type):
+            return 1
+        if (p1_hand_type < p2_hand_type):
+            return 2
+        else:
+            return determine_higher_hand_value(
+                player_one_hand, player_two_hand, p1_hand_type)
