@@ -91,7 +91,7 @@ class SendGameResultEmail(webapp2.RequestHandler):
             )
 
         player_two_hand = Hand.query(
-            ndb.AND(Hand.player == game.player_one, Hand.game == game.key)
+            ndb.AND(Hand.player == game.player_two, Hand.game == game.key)
         ).get()
         if not player_two_hand:
             raise endpoints.NotFoundException(
