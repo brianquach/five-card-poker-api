@@ -395,7 +395,7 @@ class Poker(object):
 
         hand = Poker.serialize_hand(player_one_hand)
         final_hand = Hand(
-            player=player.player_one,
+            player=game.player_one,
             game=game.key,
             hand=hand,
             state=str(HandState.ENDING)
