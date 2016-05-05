@@ -15,6 +15,9 @@ handlers:
 - url: /tasks/send_move_email
   script: main.app
 
+- url: /tasks/send_game_result_email
+  script: main.app
+
 libraries:
 - name: webapp2
   version: "2.5.2"
