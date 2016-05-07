@@ -12,6 +12,7 @@ from google.appengine.api import mail
 from google.appengine.ext import ndb
 
 from api import FiveCardPokerAPI
+from enum import HandState
 from game import Card
 from model import Game
 from model import Hand
@@ -26,7 +27,11 @@ class SendMoveEmail(webapp2.RequestHandler):
         game = get_by_urlsafe(self.request.get('game_key'), Game)
 
         player_hand = Hand.query(
-            ndb.AND(Hand.player == user.key, Hand.game == game.key)
+            ndb.AND(
+                Hand.player == user.key,
+                Hand.game == game.key,
+                Hand.state == HandState.STARTING.name
+            )
         ).get()
 
         if not player_hand:
@@ -81,7 +86,11 @@ class SendGameResultEmail(webapp2.RequestHandler):
         game = get_by_urlsafe(self.request.get('game_key'), Game)
 
         player_one_hand = Hand.query(
-            ndb.AND(Hand.player == game.player_one, Hand.game == game.key)
+            ndb.AND(
+                Hand.player == game.player_one,
+                Hand.game == game.key,
+                Hand.state == HandState.ENDING.name
+            )
         ).get()
         if not player_one_hand:
             raise endpoints.NotFoundException(
@@ -91,7 +100,11 @@ class SendGameResultEmail(webapp2.RequestHandler):
             )
 
         player_two_hand = Hand.query(
-            ndb.AND(Hand.player == game.player_two, Hand.game == game.key)
+            ndb.AND(
+                Hand.player == game.player_two,
+                Hand.game == game.key,
+                Hand.state == HandState.ENDING.name
+            )
         ).get()
         if not player_two_hand:
             raise endpoints.NotFoundException(
@@ -117,12 +130,12 @@ class SendGameResultEmail(webapp2.RequestHandler):
 
         subject = 'It''s a tie!'
         if game.winner == game.player_one:
-            subject = '{0} Wins!'.format(player_one.name)
+            subject = '{0} Wins'.format(player_one.name)
         elif game.winner == game.player_two:
-            subject = '{0} wins!'.format(player_two.name)
+            subject = '{0} Wins!'.format(player_two.name)
         
         body = """
-Game finished! {0}
+Game finished! {0} 
 
 {1}'s hand:
 {2}
