@@ -446,6 +446,7 @@ class Poker(object):
         game_outcome = Poker.game_outcome(player_one_hand, player_two_hand)
         game.game_over = True
         game.active_player = None
+
         if game_outcome == 0:
             game.winner = None
         elif game_outcome == 1:
@@ -495,6 +496,7 @@ class Poker(object):
                     is_same_suit = True
                 else:
                     is_same_suit = False
+                    break
             return is_same_suit
 
         def are_cards_in_consecutive_order(hand):
@@ -609,7 +611,7 @@ class Poker(object):
                 return 1  # High Card
 
         def determine_higher_hand_value(
-                player_one_hand, player_two_hand, hand_score):
+                player_one_hand, player_two_hand, hand_type):
             """Determine higher hand value of hands with same hand score.
 
             If both the player have the same hand type (score), whoever has the
@@ -618,7 +620,7 @@ class Poker(object):
             Args:
               player_one_hand: player one's hand.
               player_two_hand: player two's hand.
-              hand_score: the type of hand both players are holding.
+              hand_type: the type of hand both players are holding.
 
             Returns:
               A number representing the player with higher hand value:
@@ -651,11 +653,6 @@ class Poker(object):
             p1_sorted_hand = sorted(player_one_hand, key=sort_by_card_value)
             p1_lowest_card = p1_sorted_hand[0]
             p1_highest_card = p1_sorted_hand[-1]
-            is_p1_ace_low = is_ace_low(p1_lowest_card, p1_highest_card)
-            if (is_p1_ace_low):
-                p1_highest_card.value = 1
-                p1_sorted_hand = sorted(p1_sorted_hand, key=sort_by_card_value)
-                p1_highest_card = p1_sorted_hand[-1]
 
             p2_card_counter = Counter(
                 [card.value for card in player_two_hand]
@@ -664,22 +661,34 @@ class Poker(object):
             p2_sorted_hand = sorted(player_two_hand, key=sort_by_card_value)
             p2_lowest_card = p2_sorted_hand[0]
             p2_highest_card = p2_sorted_hand[-1]
-            is_p2_ace_low = is_ace_low(p2_lowest_card, p2_highest_card)
-            if (is_p2_ace_low):
-                p2_highest_card.value = 1
-                p2_sorted_hand = sorted(p2_sorted_hand, key=sort_by_card_value)
-                p2_highest_card = p2_sorted_hand[-1]
 
             # Straight Flush, Flush, Straight, High Card
-            if (hand_score in [9, 6, 5, 1]):
+            if (hand_type in [9, 6, 5, 1]):
+                if (hand_type in [9, 5]):
+                    is_p1_ace_low = is_ace_low(p1_lowest_card, p1_highest_card)
+                    if (is_p1_ace_low):
+                        p1_highest_card.value = 1
+                        p1_sorted_hand = sorted(
+                            p1_sorted_hand, key=sort_by_card_value
+                        )
+                        p1_highest_card = p1_sorted_hand[-1]
+
+                    is_p2_ace_low = is_ace_low(p2_lowest_card, p2_highest_card)
+                    if (is_p2_ace_low):
+                        p2_highest_card.value = 1
+                        p2_sorted_hand = sorted(
+                            p2_sorted_hand, key=sort_by_card_value
+                        )
+                        p2_highest_card = p2_sorted_hand[-1]
+
                 return highest_card_check(
                     p1_highest_card.value, p2_highest_card.value)
             # Four of a Kind, Full House, Three of a Kind
-            elif (hand_score in [8, 7, 4]):
+            elif (hand_type in [8, 7, 4]):
                 return most_common_card_check(
                     p1_card_frequencies[0][0], p2_card_frequencies[0][0])
             # Two Pairs
-            elif (hand_score == 3):
+            elif (hand_type == 3):
                 def sort_freq(card):
                     """Use card value in card frequency tuple to sort."""
                     return card[0]
@@ -707,7 +716,7 @@ class Poker(object):
                 else:
                     return 2
             # Pair
-            elif (hand_score == 2):
+            elif (hand_type == 2):
                 p1_pair = p1_card_frequencies[0]
                 p2_pair = p2_card_frequencies[0]
 
