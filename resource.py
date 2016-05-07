@@ -13,6 +13,10 @@ class StringMessage(messages.Message):
     """Outbound response string message"""
     message = messages.StringField(1, required=True)
 
+class PlayerName(messages.Message):
+    """Outbound response string message"""
+    player = messages.StringField(1, required=True)
+
 USER_REQUEST = endpoints.ResourceContainer(
     user_name=messages.StringField(1),
     email=messages.StringField(2)

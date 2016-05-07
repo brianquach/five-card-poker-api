@@ -33,3 +33,7 @@ class PlayerMoveForm(messages.Message):
     player = messages.StringField(1, required=True)
     card_ids_to_exchange = messages.StringField(2, repeated=True)
     game_urlsafe_key = messages.StringField(3, required=True)
+
+class GameForms(messages.Message):
+    """Outbound - Represents a list of games."""
+    games = messages.MessageField(GameForm, 1, repeated=True)

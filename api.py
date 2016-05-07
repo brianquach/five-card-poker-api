@@ -10,11 +10,13 @@ from protorpc import remote
 from google.appengine.ext import ndb
 
 from form import GameForm
+from form import GameForms
 from form import NewGameForm
 from form import PlayerMoveForm
 from game import Poker
 from model import Game
 from model import User
+from resource import PlayerName
 from resource import StringMessage
 from resource import USER_REQUEST
 from utility import get_by_urlsafe
@@ -98,6 +100,34 @@ class FiveCardPokerAPI(remote.Service):
         return StringMessage(
             message='Your move has been made here is your final hand: {0}. '
                     'Good luck!'.format(str(hand))
+        )
+
+    @endpoints.method(
+        request_message=PlayerName,
+        response_message=GameForms,
+        path='user/games',
+        name='getUserGames',
+        http_method='GET'
+    )
+    def get_user_games(self, request):
+        """Get all active user games."""
+        player = User.query(User.name == request.player).get()
+        if not player:
+            raise endpoints.NotFoundException(
+                '{0} does not exist!'.format(request.player)
+            )
+
+        games = Game.query(
+            ndb.AND(
+                Game.game_over == False,
+                ndb.OR(
+                    Game.player_one == player.key,
+                    Game.player_two == player.key
+                )
+            )
+        )
+        return GameForms(
+            games=[game.to_form() for game in games]
         )
 
 api = endpoints.api_server([FiveCardPokerAPI])
