@@ -22,7 +22,7 @@ from utility import get_by_urlsafe
 
 class SendMoveEmail(webapp2.RequestHandler):
     def post(self):
-        """Send an email to a User that it is their turn"""
+        """Send an email to a User that it is their turn."""
         user = get_by_urlsafe(self.request.get('user_key'), User)
         game = get_by_urlsafe(self.request.get('game_key'), Game)
 
@@ -82,7 +82,7 @@ move to the server.
 
 class SendGameResultEmail(webapp2.RequestHandler):
     def post(self):
-        """Send an email to a User that it is their turn"""
+        """Send an email to the players to notify them the game results."""
         game = get_by_urlsafe(self.request.get('game_key'), Game)
 
         player_one_hand = Hand.query(
@@ -168,10 +168,40 @@ Game finished! {0}
             body
         )
 
+class SendPlayerForfeitEmail(webapp2.RequestHandler):
+    def post(self):
+        """Send an email to a player to nofity an opponent forfeit."""
+        game_websafe_url = self.request.get('game_key')
+        winner = get_by_urlsafe(self.request.get('winner_key'), User)
+        loser_name = self.request.get('loser_name')
+
+        subject = '{0} has forfeit the game!'.format(loser_name)
+        
+        body = """
+Hi {2},
+
+Your opponent {0} for game {1} has forfeited. You are the winner!
+        """.format(
+            loser_name,
+            game_websafe_url,
+            winner.name
+        )
+
+        print body
+        mail.send_mail(
+            'noreply@{}.appspotmail.com'.format(
+                app_identity.get_application_id()
+            ),
+            winner.email,
+            subject,
+            body
+        )
+
 app = webapp2.WSGIApplication(
     [
         ('/tasks/send_move_email', SendMoveEmail),
-        ('/tasks/send_game_result_email', SendGameResultEmail)
+        ('/tasks/send_game_result_email', SendGameResultEmail),
+        ('/tasks/send_player_forfeit_email', SendPlayerForfeitEmail)
     ],
     debug=True
 )

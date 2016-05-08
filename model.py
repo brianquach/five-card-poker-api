@@ -51,6 +51,7 @@ class Game(ndb.Model):
     player_two = ndb.KeyProperty(required=True, kind='User')
     active_player = ndb.KeyProperty()
     game_over = ndb.BooleanProperty(required=True, default=False)
+    is_forfeit = ndb.BooleanProperty(required =True, default=False)
     winner = ndb.KeyProperty()
 
     def to_form(self):
@@ -60,6 +61,7 @@ class Game(ndb.Model):
             player_two=self.player_two.get().name,
             active_player=self.active_player.get().name,
             game_over=self.game_over,
+            is_forfeit=self.is_forfeit,
             urlsafe_key=self.key.urlsafe()
         )
         if self.winner:

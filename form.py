@@ -19,7 +19,8 @@ class GameForm(messages.Message):
     player_two = messages.StringField(3, required=True)
     active_player = messages.StringField(4, required=True)
     game_over = messages.BooleanField(5, required=True)
-    winner = messages.StringField(6)
+    is_forfeit = messages.BooleanField(6, required=True)
+    winner = messages.StringField(7)
 
 
 class NewGameForm(messages.Message):
@@ -34,6 +35,13 @@ class PlayerMoveForm(messages.Message):
     card_ids_to_exchange = messages.StringField(2, repeated=True)
     game_urlsafe_key = messages.StringField(3, required=True)
 
+
 class GameForms(messages.Message):
     """Outbound - Represents a list of games."""
     games = messages.MessageField(GameForm, 1, repeated=True)
+
+
+class CancelGameForm(messages.Message):
+    """Inbound - Used to forfeit an active game."""
+    game_urlsafe_key = messages.StringField(1, required=True)
+    player = messages.StringField(2, required=True)

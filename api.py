@@ -7,8 +7,10 @@ import endpoints
 
 from protorpc import remote
 
+from google.appengine.api import taskqueue
 from google.appengine.ext import ndb
 
+from form import CancelGameForm
 from form import GameForm
 from form import GameForms
 from form import NewGameForm
@@ -45,7 +47,7 @@ class FiveCardPokerAPI(remote.Service):
         user = User(name=request.user_name, email=request.email)
         user.put()
         return StringMessage(
-            message='User {} created!'.format(request.user_name)
+            message='User {0} created!'.format(request.user_name)
         )
 
     @endpoints.method(
@@ -129,5 +131,47 @@ class FiveCardPokerAPI(remote.Service):
         return GameForms(
             games=[game.to_form() for game in games]
         )
+
+    @endpoints.method(
+        request_message=CancelGameForm,
+        response_message=StringMessage,
+        path='user/cancel-game',
+        name='cancelGame',
+        http_method='POST'
+    )
+    def cancel_game(self, request):
+        """Player forfeits game."""
+        game = get_by_urlsafe(request.game_urlsafe_key, Game)
+        player = User.query(User.name == request.player).get()
+        if not player:
+            raise endpoints.NotFoundException(
+                '{0} does not exist!'.format(request.player)
+            )
+        if game.player_one != player.key and game.player_two != player.key:
+            raise endpoints.ForbiddenException(
+                '{0} is not part of this game!'.format(request.player)
+            )
+
+        if game.player_one == player.key:
+            game.winner = game.player_two
+        else:
+            game.winner = game.player_one
+        game.game_over = True
+        game.is_forfeit = True
+        game.active_player = None
+        game.put()
+
+        # Notify the opponent that they have won
+
+        taskqueue.add(
+            url='/tasks/send_player_forfeit_email',
+            params={
+                'game_key': game.key.urlsafe(),
+                'winner_key': game.winner.urlsafe(),
+                'loser_name': player.name
+            }
+        )
+
+        return StringMessage(message='You have forfeited the game!')
 
 api = endpoints.api_server([FiveCardPokerAPI])
