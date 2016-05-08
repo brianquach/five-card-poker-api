@@ -242,30 +242,41 @@ class FiveCardPokerAPI(remote.Service):
         for game in games:
             player_one = game.player_one.get()
             player_two = game.player_two.get()
-            p1_hands = Hand.query(
-                Hand.game == game.key,
-                Hand.player == player_one.key
-            )
-            p1_hands = Poker.get_player_start_end_hands(p1_hands)
-            p2_hands = Hand.query(
-                Hand.game == game.key,
-                Hand.player == player_two.key
-            )
-            p2_hands = Poker.get_player_start_end_hands(p2_hands)
-            
-            game_histories.append(
-                GameHistoryForm(
-                    game_urlsafe_key=game.key.urlsafe(),
-                    player_one=player_one.name,
-                    player_one_start_hand=repr(p1_hands[0]),
-                    player_one_end_hand=repr(p1_hands[1]),
-                    player_two=player_two.name,
-                    player_two_start_hand=repr(p2_hands[0]),
-                    player_two_end_hand=repr(p2_hands[1]),
-                    is_forfeit=game.is_forfeit,
-                    winner=game.winner.get().name
+
+            if game.is_forfeit:
+                game_histories.append(
+                    GameHistoryForm(
+                        game_urlsafe_key=game.key.urlsafe(),
+                        player_one=player_one.name,
+                        player_two=player_two.name,
+                        is_forfeit=game.is_forfeit,
+                        winner=game.winner.get().name
+                    )
                 )
-            )
+            else:
+                p1_hands = Hand.query(
+                    Hand.game == game.key,
+                    Hand.player == player_one.key
+                )
+                p1_hands = Poker.get_player_start_end_hands(p1_hands)
+                p2_hands = Hand.query(
+                    Hand.game == game.key,
+                    Hand.player == player_two.key
+                )
+                p2_hands = Poker.get_player_start_end_hands(p2_hands)
+                game_histories.append(
+                    GameHistoryForm(
+                        game_urlsafe_key=game.key.urlsafe(),
+                        player_one=player_one.name,
+                        player_one_start_hand=repr(p1_hands[0]),
+                        player_one_end_hand=repr(p1_hands[1]),
+                        player_two=player_two.name,
+                        player_two_start_hand=repr(p2_hands[0]),
+                        player_two_end_hand=repr(p2_hands[1]),
+                        is_forfeit=game.is_forfeit,
+                        winner=game.winner.get().name
+                    )
+                )
         return GameHistoryForms(
             games=game_histories
         )
