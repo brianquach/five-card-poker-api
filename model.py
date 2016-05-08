@@ -16,12 +16,25 @@ class User(ndb.Model):
       name: Name of the player; must be unique.
       email: Email address of the player. Used to email player reminders and
         game relevant events.
+      wins: Number of games a player has won.
+      ties: Number of games a player has tied.
+      losses: Number of games a player has loss.
 
     Code Citation:
       https://github.com/udacity/FSND-P4-Design-A-Game/blob/master/Sample%20Project%20tic-tac-toe/models.py  # noqa
     """
     name = ndb.StringProperty(required=True)
-    email = ndb.StringProperty()
+    email = ndb.StringProperty(required=True)
+    wins = ndb.IntegerProperty(default=0)
+    losses = ndb.IntegerProperty(default=0)
+    ties = ndb.IntegerProperty(default=0)
+    total_games =ndb.ComputedProperty(
+        lambda self: self.wins + self.losses + self.ties
+    )
+    win_percent = ndb.ComputedProperty(
+        lambda self:
+          0 if self.total_games == 0 else self.wins / self.total_games
+    )
 
     def to_form(self):
         """Returns a form representation of the User"""
@@ -41,6 +54,7 @@ class Game(ndb.Model):
       player_two: Key representing player two in the game.
       active_player: Key representing current player's turn.
       game_over: Boolean if game is completed or not.
+      is_forfeit: Boolean if game is forfeited or not.
       winner: Key representing player who has won the game.
 
     Code Citation:

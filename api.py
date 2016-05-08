@@ -173,5 +173,40 @@ class FiveCardPokerAPI(remote.Service):
         )
 
         return StringMessage(message='You have forfeited the game!')
+    
+    @endpoints.method(
+        request_message=PlayerName,
+        response_message=StringMessage,
+        path='user/get-ranking',
+        name='getUserRankings',
+        http_method='GET'
+    )
+    def get_user_rankings(self, request):
+        """Get player ranking and stats."""
+        player = User.query(User.name == request.player).get()
+        if not player:
+            raise endpoints.NotFoundException(
+                '{0} does not exist!'.format(request.player)
+            )
+        player_stats = '{0}-{1}-{2}'.format(
+            player.wins, player.ties, player.losses
+        )
+
+        player_rankings = User.query().order(-User.win_percent)
+        player_rank = 0
+        number_of_players = player_rankings.count()
+        for p in player_rankings:
+            player_rank += 1
+            if p.name == player.name:
+                break
+
+        return StringMessage(
+            message='{0} {1} (Wins-Ties-Losses) rank: {2} out of {3}.'.format(
+                player.name,
+                player_stats,
+                player_rank,
+                number_of_players
+            )
+        )
 
 api = endpoints.api_server([FiveCardPokerAPI])

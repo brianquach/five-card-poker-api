@@ -308,6 +308,7 @@ class Poker(object):
                 final_hand,
                 player_one_hand
             )
+            Poker.update_player_stats(game)
 
         return final_hand
 
@@ -752,3 +753,25 @@ class Poker(object):
         else:
             return determine_higher_hand_value(
                 player_one_hand, player_two_hand, p1_hand_type)
+
+    @staticmethod
+    def update_player_stats(game):
+        """Update player statistics (win, loss, tie).
+
+        Args:
+          game: current game the player is playing in.
+        """
+        player_one = game.player_one.get()
+        player_two = game.player_two.get()
+        if (game.winner is None):
+            player_one.ties += 1
+            player_two.ties += 1
+        elif (game.winner == game.player_one):
+            player_one.wins += 1
+            player_two.losses += 1
+        else:
+            player_one.losses += 1
+            player_two.wins += 1
+        player_one.put()
+        player_two.put()
+        
