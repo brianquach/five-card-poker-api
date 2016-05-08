@@ -681,7 +681,7 @@ class Poker(object):
                             p2_sorted_hand, key=sort_by_card_value
                         )
                         p2_highest_card = p2_sorted_hand[-1]
-
+                
                 return highest_card_check(
                     p1_highest_card.value, p2_highest_card.value)
             # Four of a Kind, Full House, Three of a Kind
@@ -774,4 +774,20 @@ class Poker(object):
             player_two.wins += 1
         player_one.put()
         player_two.put()
+
+    @staticmethod
+    def get_player_start_end_hands(hands):
+        """Return start and end hands for player.
+
+        Returns:
+          Tuple with the starting hand as the first element and the ending hand
+          as the second element.
+        """
+        for hand in hands:
+            cards = Poker.load_player_hand(hand.hand)
+            if hand.state == HandState.STARTING.name:
+                start_hand = cards
+            else:
+                end_hand = cards
+        return (start_hand, end_hand)
         

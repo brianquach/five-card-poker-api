@@ -10,13 +10,17 @@ from protorpc import remote
 from google.appengine.api import taskqueue
 from google.appengine.ext import ndb
 
+from enum import HandState
 from form import CancelGameForm
 from form import GameForm
 from form import GameForms
+from form import GameHistoryForm
+from form import GameHistoryForms
 from form import NewGameForm
 from form import PlayerMoveForm
 from game import Poker
 from model import Game
+from model import Hand
 from model import User
 from resource import PlayerName
 from resource import StringMessage
@@ -182,7 +186,7 @@ class FiveCardPokerAPI(remote.Service):
         http_method='GET'
     )
     def get_user_rankings(self, request):
-        """Get player ranking and stats."""
+        """Get player stats and ranking based on win total game ratio."""
         player = User.query(User.name == request.player).get()
         if not player:
             raise endpoints.NotFoundException(
@@ -208,5 +212,63 @@ class FiveCardPokerAPI(remote.Service):
                 number_of_players
             )
         )
+
+    @endpoints.method(
+        request_message=PlayerName,
+        response_message=GameHistoryForms,
+        path='user/get-history',
+        name='getGameHistory',
+        http_method='GET'
+    )
+    def get_game_history(self, request):
+        """Get player game history."""
+        player = User.query(User.name == request.player).get()
+        if not player:
+            raise endpoints.NotFoundException(
+                '{0} does not exist!'.format(request.player)
+            )
+
+        games = Game.query(
+            ndb.AND(
+                Game.game_over == True,
+                ndb.OR(
+                    Game.player_one == player.key,
+                    Game.player_two == player.key
+                )
+            )
+        )
+
+        game_histories = []
+        for game in games:
+            player_one = game.player_one.get()
+            player_two = game.player_two.get()
+            p1_hands = Hand.query(
+                Hand.game == game.key,
+                Hand.player == player_one.key
+            )
+            p1_hands = Poker.get_player_start_end_hands(p1_hands)
+            p2_hands = Hand.query(
+                Hand.game == game.key,
+                Hand.player == player_two.key
+            )
+            p2_hands = Poker.get_player_start_end_hands(p2_hands)
+            
+            game_histories.append(
+                GameHistoryForm(
+                    game_urlsafe_key=game.key.urlsafe(),
+                    player_one=player_one.name,
+                    player_one_start_hand=repr(p1_hands[0]),
+                    player_one_end_hand=repr(p1_hands[1]),
+                    player_two=player_two.name,
+                    player_two_start_hand=repr(p2_hands[0]),
+                    player_two_end_hand=repr(p2_hands[1]),
+                    is_forfeit=game.is_forfeit,
+                    winner=game.winner.get().name
+                )
+            )
+        return GameHistoryForms(
+            games=game_histories
+        )
+
 
 api = endpoints.api_server([FiveCardPokerAPI])

@@ -45,3 +45,21 @@ class CancelGameForm(messages.Message):
     """Inbound - Used to forfeit an active game."""
     game_urlsafe_key = messages.StringField(1, required=True)
     player = messages.StringField(2, required=True)
+
+
+class GameHistoryForm(messages.Message):
+    """Outbound - Represents a game's history."""
+    game_urlsafe_key = messages.StringField(1)
+    player_one = messages.StringField(2)
+    player_one_start_hand = messages.StringField(3)
+    player_one_end_hand = messages.StringField(4)
+    player_two = messages.StringField(5)
+    player_two_start_hand = messages.StringField(6)
+    player_two_end_hand = messages.StringField(7)
+    is_forfeit = messages.BooleanField(8)
+    winner = messages.StringField(9)
+
+
+class GameHistoryForms(messages.Message):
+    """Outbound - Represents a list of a player's game history."""
+    games = messages.MessageField(GameHistoryForm, 1, repeated=True)
