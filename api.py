@@ -44,14 +44,18 @@ class FiveCardPokerAPI(remote.Service):
         # Code Citation:
         #   https://github.com/udacity/FSND-P4-Design-A-Game/blob/master/Skeleton%20Project%20Guess-a-Number/api.py  # noqa
 
-        if User.query(User.name == request.user_name).get():
+        if not request.name:
+            raise endpoints.BadRequestException('A name is required.')
+        if not request.email:
+            raise endpoints.BadRequestException('An email is required.')
+        if User.query(User.name == request.name).get():
             raise endpoints.ConflictException(
                 'A User with that name already exists!'
             )
-        user = User(name=request.user_name, email=request.email)
+        user = User(name=request.name, email=request.email)
         user.put()
         return StringMessage(
-            message='User {0} created!'.format(request.user_name)
+            message='User {0} created!'.format(request.name)
         )
 
     @endpoints.method(
