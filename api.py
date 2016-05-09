@@ -168,6 +168,7 @@ class FiveCardPokerAPI(remote.Service):
         game.is_forfeit = True
         game.active_player = None
         game.put()
+        Poker.update_player_stats(game)
 
         # Notify the opponent that they have won
 
