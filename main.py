@@ -51,7 +51,7 @@ class SendMoveEmail(webapp2.RequestHandler):
             )
 
         subject = 'Your Turn!'
-        body = """
+        body = '''
 Hi {0}!
 
 It's your turn current turn to play five card poker! Choose the cards you want
@@ -68,7 +68,7 @@ Here is your hand:
 Notice, below each listed card is a "Card Id"; this is what you will use to
 identify to the server which cards you want to exchange when you make your next
 move to the server.
-        """.format(user.name, hand_information, game.key.urlsafe())
+        '''.format(user.name, hand_information, game.key.urlsafe())
 
         print body
         mail.send_mail(
@@ -134,7 +134,7 @@ class SendGameResultEmail(webapp2.RequestHandler):
         elif game.winner == game.player_two:
             subject = '{0} Wins!'.format(player_two.name)
         
-        body = """
+        body = '''
 Game finished! {0} 
 
 {1}'s hand:
@@ -142,7 +142,7 @@ Game finished! {0}
 
 {3}'s hand:
 {4}
-        """.format(
+        '''.format(
             subject,
             player_one.name,
             p1_hand_information,
@@ -177,11 +177,10 @@ class SendPlayerForfeitEmail(webapp2.RequestHandler):
 
         subject = '{0} has forfeit the game!'.format(loser_name)
         
-        body = """
-Hi {2},
+        body = '''Hi {2},
 
 Your opponent {0} for game {1} has forfeited. You are the winner!
-        """.format(
+        '''.format(
             loser_name,
             game_websafe_url,
             winner.name
@@ -197,11 +196,44 @@ Your opponent {0} for game {1} has forfeited. You are the winner!
             body
         )
 
+class SendReminderEmail(webapp2.RequestHandler):
+    def get(self):
+        """Send a reminder email to users with a game in progress."""
+        players = User.query(User.email != None)
+        for player in players:
+            games = Game.query(
+                ndb.AND(
+                    Game.game_over == False,
+                    Game.active_player == player.key
+                )
+            )
+            game_keys = ', '.join(game.key.urlsafe() for game in games)
+            number_of_games = games.count()
+            if number_of_games > 0:
+                subject = 'This is a reminder!'
+                body = '''Hey {0}, you have {1} games in progress. It is your
+ turn to make a move in these games! Their url safe keys are: {2}'''.format(
+                    player.name,
+                    number_of_games,
+                    game_keys
+                )
+                
+                print body
+                mail.send_mail(
+                    'noreply@{}.appspotmail.com'.format(
+                        app_identity.get_application_id()
+                    ),
+                    player.email,
+                    subject,
+                    body
+                )
+
 app = webapp2.WSGIApplication(
     [
         ('/tasks/send_move_email', SendMoveEmail),
         ('/tasks/send_game_result_email', SendGameResultEmail),
-        ('/tasks/send_player_forfeit_email', SendPlayerForfeitEmail)
+        ('/tasks/send_player_forfeit_email', SendPlayerForfeitEmail),
+        ('/crons/send_reminder', SendReminderEmail)
     ],
     debug=True
 )
