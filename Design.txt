@@ -1,0 +1,28 @@
+After brainstorming the Five-Card Poker game mechanics and features, I realized the ndb.Game model would require many more additional properties to track the state of a two player game.
+
+The ndb.Game model properties: 
+    - deck (required ndb.JsonProperty): tracks the deck of cards that the players would be drawing from; JSON is used to recreate the deck.
+    - player_one (required ndb.KeyProperty): associates the first player to the game.
+    - player_two (required ndb.KeyProperty): associates the second player to the game.
+    - active_player (ndb.KeyProperty): tracks the current players turn.
+    - game_over (required ndb.BooleanProperty): indicates if the game is finished or not.
+    - is_forfeit (required ndb.BooleanProperty): indicates if the game is forfeited or not; this property is used for a more detailed player game history, instead of just showing a loss for a player canceled game.
+    - winner (ndb.KeyProperty): associates a player as the winner of the game.
+Each property of the ndb.Game model helps track and give detail of the game state.
+
+The ndb.User model also had additional properties; ndb.User properties:
+    - name (required ndb.StringProperty): name of player must be unique to distinguish players.
+    - email (required ndb.StringProperty): player email; required because email is the main way the game communicates to the players.
+    - wins (ndb.IntegerProperty): tracks the number of games a player has won; use to help calculate player rankings and display player stats.
+    - losses (ndb.IntegerProperty): tracks the number of games a player has loss; use to help calculate player rankings and display player stats.
+    - ties (ndb.IntegerProperty): tracks the number of games a player has tied; use to help calculate player rankings and display player stats.
+    - total_games (ndb.ComputedProperty): calculate total number of games a player has played; use to help calculate win percent for player ranking.
+    - win_percent (ndb.ComputedProperty): calculate player win percent; use to determine player standing.
+
+A new model, ndb.Hand, is used to keep track of player hand states; ultimately helps to keep player's move history for a game; ndb.Hand Properties:
+    player (required ndb.KeyProperty): associates a player to the hand.
+    game (required ndb.KeyProperty): associates a game to the hand.
+    hand (required ndb.JsonProperty): tracks player's hand state; JSON is used to recreate hand.
+    state = (required ndb.StringProperty): helps distinguish the beginning and final player hands in a game.
+
+One trade-off with implementing a two-player game vs a single-player game is that I did not make a Game a decendant of a User because there are two players to a game; if a game could be a decendant of User then it would make queries such as "get_user_games" a bit easier to perform. Something I was considering to do was to make the Hand model a descendant of a game to allow Hand model querying by ancestor when re-creating a game history. A struggle I thought about was adding anti-cheating logic to the game; for instance the first player can make their move and then easily submit random card Ids for their opponent until the game recognizes some card Ids in the opponents hand, essentially making the move for their opponent; this is easy to do because the card ids are not unique to each player.
