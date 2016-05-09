@@ -3,6 +3,7 @@
 Fourth project for Full-Stack Web Devloper Nanodegree course; Five-Card Poker is a web game that pits two players agaisnt each other in a game of a little luck and strategy. Each player is first delt five cards from a standard 52 card deck and is then able to exchange up to five cards for new cards to form their final hands. Both players' hands are then compared and the winner is the player with the best hand.
 
 Poker hand rankings (greatest to least):
+
 1. Royal Flush - A straight from Ten to Ace all in the same suit.
 2. Straight Flush - Any straight with cards in the same suit.
 3. Four of a Kind - Four of the same kind of card paired with any left-over card.
@@ -15,13 +16,6 @@ Poker hand rankings (greatest to least):
 10. High Card - A hand that does not consist of any of the above.
 
 This game is influenced by the [five-card draw](https://en.wikipedia.org/wiki/Five-card_draw) poker rules.
-
-Feature list:
-* Player rankings
-* Game history
-* Player triggered forfeits
-* Turn-based email notifications
-* Scheduled player turn email reminder
 
 ## Table of Contents
 
@@ -51,6 +45,8 @@ Five-Card Poker is built using Python, and depends on the Google App Engine (GAE
     - More details on locally testing an API backend can be found [here](https://cloud.google.com/appengine/docs/python/endpoints/test_deploy#running_and_testing_api_backends_locally).
 5. Once ready to deploy, run the deploy function in GAE to deploy application onto Google's App Engine platform
     - Make sure the application ID in app.yaml matches the project ID created in [Google Cloud Platform Console](https://console.developers.google.com/)
+
+**Note:** If locally testing the API in chrome, launch Chrome using the console as follows: [path-to-Chrome] --user-data-dir=test --unsafely-treat-insecure-origin-as-secure=http://localhost:port
 
 ## How to Play
 
@@ -110,7 +106,7 @@ The following instrutions will detail how to start and play a game of five-card 
     - Method: PUT
     - Parameters: player, card_ids_to_exchange, game_urlsafe_key
     - Returns: Message confirming player move with a list of cards representing their final hand.
-    - Description: Determines players final hand based on the cards if any the player want to exchange and notifies the next player of their turn. If both players have made a move, then the game will email both players of the game outcome.
+    - Description: Determines players final hand based on the cards if any the player want to exchange and emails the next player of their turn. If both players have made a move, then the game will email both players of the game outcome.
     - Raises: NotFoundException if player does not exist. ForbiddenException if player is not part of the game or if it is not the player's turn. BadRequestException if game key is not valid.
     
 - **get_user_games**
@@ -126,7 +122,7 @@ The following instrutions will detail how to start and play a game of five-card 
     - Method: PUT
     - Parameters: game_urlsafe_key, player
     - Returns: Message confirming that a player has forfeit the game and that their opponent has won.
-    - Description: Cancel game does not actually cancel the game, but forfeits the player that is canceling the game; giving the win to the cancelling player's opponent. The name of this endpoint is kept for consistency with the project rubric.
+    - Description: Cancel game does not actually cancel the game, but forfeits the player that is canceling the game; giving the win to the cancelling player's opponent. The name of this endpoint is kept for consistency with the project rubric. The player's opponent will be sent an email notifying them of player's forfeiture and their win.
     - Raises: NotFoundException if player does not exist. ForbiddenException if player is not part of the game. BadRequestException is game key is not valid.
     
 - **get_user_rankings**
