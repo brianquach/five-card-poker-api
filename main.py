@@ -80,6 +80,7 @@ move to the server.
             body
         )
 
+
 class SendGameResultEmail(webapp2.RequestHandler):
     def post(self):
         """Send an email to the players to notify them the game results."""
@@ -112,7 +113,7 @@ class SendGameResultEmail(webapp2.RequestHandler):
                     game.player_two, game.key
                 )
             )
-        
+
         player_one = game.player_one.get()
         hand = json.loads(player_one_hand.hand)
         cards = [Card(name=card['name'], suit=card['suit']) for card in hand]
@@ -127,15 +128,14 @@ class SendGameResultEmail(webapp2.RequestHandler):
         for card in cards:
             p2_hand_information += 'Card: {0}\n'.format(repr(card))
 
-
         subject = 'It''s a tie!'
         if game.winner == game.player_one:
             subject = '{0} Wins'.format(player_one.name)
         elif game.winner == game.player_two:
             subject = '{0} Wins!'.format(player_two.name)
-        
+
         body = '''
-Game finished! {0} 
+Game finished! {0}
 
 {1}'s hand:
 {2}
@@ -168,6 +168,7 @@ Game finished! {0}
             body
         )
 
+
 class SendPlayerForfeitEmail(webapp2.RequestHandler):
     def post(self):
         """Send an email to a player to nofity an opponent forfeit."""
@@ -176,7 +177,7 @@ class SendPlayerForfeitEmail(webapp2.RequestHandler):
         loser_name = self.request.get('loser_name')
 
         subject = '{0} has forfeit the game!'.format(loser_name)
-        
+
         body = '''Hi {2},
 
 Your opponent {0} for game {1} has forfeited. You are the winner!
@@ -196,14 +197,15 @@ Your opponent {0} for game {1} has forfeited. You are the winner!
             body
         )
 
+
 class SendReminderEmail(webapp2.RequestHandler):
     def get(self):
         """Send a reminder email to users with a game in progress."""
-        players = User.query(User.email != None)
+        players = User.query(User.email != None)  # noqa
         for player in players:
             games = Game.query(
                 ndb.AND(
-                    Game.game_over == False,
+                    Game.game_over == False,  # noqa
                     Game.active_player == player.key
                 )
             )
@@ -217,7 +219,7 @@ class SendReminderEmail(webapp2.RequestHandler):
                     number_of_games,
                     game_keys
                 )
-                
+
                 print body
                 mail.send_mail(
                     'noreply@{}.appspotmail.com'.format(

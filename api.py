@@ -18,13 +18,13 @@ from form import GameHistoryForm
 from form import GameHistoryForms
 from form import NewGameForm
 from form import PlayerMoveForm
+from form import PlayerName
+from form import StringMessage
 from form import UserForm
 from game import Poker
 from model import Game
 from model import Hand
 from model import User
-from resource import PlayerName
-from resource import StringMessage
 from utility import get_by_urlsafe
 
 
@@ -125,7 +125,7 @@ class FiveCardPokerAPI(remote.Service):
 
         games = Game.query(
             ndb.AND(
-                Game.game_over == False,
+                Game.game_over == False,  # noqa
                 ndb.OR(
                     Game.player_one == player.key,
                     Game.player_two == player.key
@@ -177,7 +177,7 @@ class FiveCardPokerAPI(remote.Service):
         )
 
         return StringMessage(message='You have forfeited the game!')
-    
+
     @endpoints.method(
         request_message=PlayerName,
         response_message=StringMessage,
@@ -230,7 +230,7 @@ class FiveCardPokerAPI(remote.Service):
 
         games = Game.query(
             ndb.AND(
-                Game.game_over == True,
+                Game.game_over == True,  # noqa
                 ndb.OR(
                     Game.player_one == player.key,
                     Game.player_two == player.key

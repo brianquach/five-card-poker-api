@@ -443,7 +443,7 @@ class Poker(object):
         final_hand.put()
 
         # Check game outcome and send email to players with results.
-        
+
         game_outcome = Poker.game_outcome(player_one_hand, player_two_hand)
         game.game_over = True
         game.active_player = None
@@ -681,7 +681,7 @@ class Poker(object):
                             p2_sorted_hand, key=sort_by_card_value
                         )
                         p2_highest_card = p2_sorted_hand[-1]
-                
+
                 return highest_card_check(
                     p1_highest_card.value, p2_highest_card.value)
             # Four of a Kind, Full House, Three of a Kind
@@ -790,4 +790,3 @@ class Poker(object):
             else:
                 end_hand = cards
         return (start_hand, end_hand)
-        

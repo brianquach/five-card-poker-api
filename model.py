@@ -28,12 +28,12 @@ class User(ndb.Model):
     wins = ndb.IntegerProperty(default=0)
     losses = ndb.IntegerProperty(default=0)
     ties = ndb.IntegerProperty(default=0)
-    total_games =ndb.ComputedProperty(
+    total_games = ndb.ComputedProperty(
         lambda self: self.wins + self.losses + self.ties
     )
     win_percent = ndb.ComputedProperty(
         lambda self:
-          0 if self.total_games == 0 else self.wins / self.total_games
+            0 if self.total_games == 0 else self.wins / self.total_games
     )
 
     def to_form(self):
@@ -65,7 +65,7 @@ class Game(ndb.Model):
     player_two = ndb.KeyProperty(required=True, kind='User')
     active_player = ndb.KeyProperty()
     game_over = ndb.BooleanProperty(required=True, default=False)
-    is_forfeit = ndb.BooleanProperty(required =True, default=False)
+    is_forfeit = ndb.BooleanProperty(required=True, default=False)
     winner = ndb.KeyProperty()
 
     def to_form(self):

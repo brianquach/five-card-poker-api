@@ -63,3 +63,13 @@ class GameHistoryForm(messages.Message):
 class GameHistoryForms(messages.Message):
     """Outbound - Represents a list of a player's game history."""
     games = messages.MessageField(GameHistoryForm, 1, repeated=True)
+
+
+class StringMessage(messages.Message):
+    """Outbound response string message"""
+    message = messages.StringField(1, required=True)
+
+
+class PlayerName(messages.Message):
+    """Outbound response string message"""
+    player = messages.StringField(1, required=True)
