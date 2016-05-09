@@ -18,13 +18,13 @@ from form import GameHistoryForm
 from form import GameHistoryForms
 from form import NewGameForm
 from form import PlayerMoveForm
+from form import UserForm
 from game import Poker
 from model import Game
 from model import Hand
 from model import User
 from resource import PlayerName
 from resource import StringMessage
-from resource import USER_REQUEST
 from utility import get_by_urlsafe
 
 
@@ -32,7 +32,7 @@ from utility import get_by_urlsafe
 class FiveCardPokerAPI(remote.Service):
     """An API for a two-player five card poker game."""
     @endpoints.method(
-        request_message=USER_REQUEST,
+        request_message=UserForm,
         response_message=StringMessage,
         path='user/create',
         name='createUser',
@@ -83,7 +83,7 @@ class FiveCardPokerAPI(remote.Service):
         response_message=StringMessage,
         path='game/action',
         name='makeMove',
-        http_method='POST'
+        http_method='PUT'
     )
     def make_move(self, request):
         """Make a move."""
@@ -141,7 +141,7 @@ class FiveCardPokerAPI(remote.Service):
         response_message=StringMessage,
         path='user/cancel-game',
         name='cancelGame',
-        http_method='POST'
+        http_method='PUT'
     )
     def cancel_game(self, request):
         """Player forfeits game."""
@@ -181,7 +181,7 @@ class FiveCardPokerAPI(remote.Service):
     @endpoints.method(
         request_message=PlayerName,
         response_message=StringMessage,
-        path='user/get-ranking',
+        path='user/ranking',
         name='getUserRankings',
         http_method='GET'
     )
@@ -216,7 +216,7 @@ class FiveCardPokerAPI(remote.Service):
     @endpoints.method(
         request_message=PlayerName,
         response_message=GameHistoryForms,
-        path='user/get-history',
+        path='user/history',
         name='getGameHistory',
         http_method='GET'
     )
