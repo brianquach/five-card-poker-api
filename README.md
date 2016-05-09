@@ -88,10 +88,10 @@ The following instrutions will detail how to start and play a game of five-card 
 - **create_user**
     - Path: 'user/create'
     - Method: POST
-    - Parameters: user_name, email
+    - Parameters: name, email
     - Returns: Message confirming creation of the User.
-    - Description: Creates a new User. user_name provided must be unique. email is required because it is main communication method between the user and the game.
-    - Raises: ConflictException if a User with that user_name already exists.
+    - Description: Creates a new User. name provided must be unique. email is required because it is main communication method between the user and the game.
+    - Raises: ConflictException if a User with that name already exists. BadRequestException if a name or email is not provided.
     
 - **new_game**
     - Path: 'game/new'
@@ -149,7 +149,7 @@ The following instrutions will detail how to start and play a game of five-card 
  - cron.yaml: Cronjob configurations.
  - main.py: Handler for taskqueue handler.
  - model.py: Entities including their helper methods.
- - form.py: Message definitions .
+ - form.py: Message container definitions.
  - utils.py: Helper function for retrieving Game model by urlsafe Key string.
 
 ## Models
