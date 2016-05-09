@@ -9,7 +9,7 @@ from protorpc import messages
 class UserForm(messages.Message):
     """Outbound - Represents a user."""
     name = messages.StringField(1, required=True)
-    email = messages.StringField(2)
+    email = messages.StringField(2, required=True)
 
 
 class GameForm(messages.Message):
