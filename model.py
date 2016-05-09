@@ -12,6 +12,10 @@ from form import UserForm
 class User(ndb.Model):
     """User profile.
 
+    The points property will be used to determine player rankings. Wins are
+    worth three points, ties are worth two points, and losses are worth one
+    point.
+
     Attributes:
       name: Name of the player; must be unique.
       email: Email address of the player. Used to email player reminders and
@@ -19,6 +23,7 @@ class User(ndb.Model):
       wins: Number of games a player has won.
       ties: Number of games a player has tied.
       losses: Number of games a player has loss.
+      points: Total points a player has earned from all games played.
 
     Code Citation:
       https://github.com/udacity/FSND-P4-Design-A-Game/blob/master/Sample%20Project%20tic-tac-toe/models.py  # noqa
@@ -28,12 +33,9 @@ class User(ndb.Model):
     wins = ndb.IntegerProperty(default=0)
     losses = ndb.IntegerProperty(default=0)
     ties = ndb.IntegerProperty(default=0)
-    total_games = ndb.ComputedProperty(
-        lambda self: self.wins + self.losses + self.ties
-    )
-    win_percent = ndb.ComputedProperty(
+    points = ndb.ComputedProperty(
         lambda self:
-            0 if self.total_games == 0 else self.wins / self.total_games
+            (self.wins * 3) + (self.ties * 2) + (self.losses)
     )
 
     def to_form(self):

@@ -190,7 +190,7 @@ class FiveCardPokerAPI(remote.Service):
         http_method='GET'
     )
     def get_user_rankings(self, request):
-        """Get player stats and ranking based on win total game ratio."""
+        """Get player stats and ranking based on total points earned."""
         player = User.query(User.name == request.player).get()
         if not player:
             raise endpoints.NotFoundException(
@@ -200,7 +200,7 @@ class FiveCardPokerAPI(remote.Service):
             player.wins, player.ties, player.losses
         )
 
-        player_rankings = User.query().order(-User.win_percent)
+        player_rankings = User.query().order(-User.points)
         player_rank = 0
         number_of_players = player_rankings.count()
         for p in player_rankings:
@@ -209,7 +209,7 @@ class FiveCardPokerAPI(remote.Service):
                 break
 
         return StringMessage(
-            message='{0} {1} (Wins-Ties-Losses) rank: {2} out of {3}.'.format(
+            message='{0} {1} (Wins-Ties-Losses) rank: {2} of {3}.'.format(
                 player.name,
                 player_stats,
                 player_rank,

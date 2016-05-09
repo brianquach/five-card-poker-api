@@ -83,6 +83,8 @@ The following instrutions will detail how to start and play a game of five-card 
 5. Once a player has submitted their move, the game should respond with a list of cards that will consist of their final hand.
 6. After both players have made their move, the game will email both players with the game result and with each players' respective hands.
 
+**Notes:** A player will be sent a reminder email every hour when it is their turn to make a move.
+
 ## Endpoints
 
 - **create_user**
@@ -130,7 +132,7 @@ The following instrutions will detail how to start and play a game of five-card 
     - Method: GET
     - Parameters: player
     - Returns: Messaging detailing a player's name and record (wins-ties-losses) and their rank out of all the players.
-    - Description: Players stats are tracked and players are ranked by their number of wins over total games.
+    - Description: Players are ranked by the total number of points they have earned by playing games. Wins are worth three points, ties are two points, and a loss is one point.
     - Raises: NotFoundException if a player does not exist.
 
 - **get_game_history**
@@ -151,6 +153,8 @@ The following instrutions will detail how to start and play a game of five-card 
  - model.py: Entities including their helper methods.
  - form.py: Message container definitions.
  - utils.py: Helper function for retrieving Game model by urlsafe Key string.
+ - enum.py: Contains enumerations.
+ - Design.txt: Contains design reflections.
 
 ## Models
 

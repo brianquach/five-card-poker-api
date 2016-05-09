@@ -16,8 +16,7 @@ The ndb.User model also had additional properties; ndb.User properties:
     - wins (ndb.IntegerProperty): tracks the number of games a player has won; use to help calculate player rankings and display player stats.
     - losses (ndb.IntegerProperty): tracks the number of games a player has loss; use to help calculate player rankings and display player stats.
     - ties (ndb.IntegerProperty): tracks the number of games a player has tied; use to help calculate player rankings and display player stats.
-    - total_games (ndb.ComputedProperty): calculate total number of games a player has played; use to help calculate win percent for player ranking.
-    - win_percent (ndb.ComputedProperty): calculate player win percent; use to determine player standing.
+    - points (ndb.ComputedProperty): calculate player points wins are worth three, ties are worth two, and losses are worth one; use to determine player standing.
 
 A new model, ndb.Hand, is used to keep track of player hand states; ultimately helps to keep player's move history for a game; ndb.Hand Properties:
     - player (required ndb.KeyProperty): associates a player to the hand.
