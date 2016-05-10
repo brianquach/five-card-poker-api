@@ -22,6 +22,7 @@ This game is influenced by the [five-card draw](https://en.wikipedia.org/wiki/Fi
 * [Dependancies](#dependancies)
 * [Setup Instructions](#setup-instructions)
 * [How To Play](#how-to-play)
+* [Score Keeping](#score-keeping)
 * [Endpoints](#endpoints)
 * [Files](#files)
 * [Models](#models)
@@ -84,6 +85,16 @@ The following instrutions will detail how to start and play a game of five-card 
 6. After both players have made their move, the game will email both players with the game result and with each players' respective hands.
 
 **Notes:** A player will be sent a reminder email every hour when it is their turn to make a move.
+
+## Score Keeping
+
+This game uses a simple way to track player performance. Players are ranked by points they accumulate by playing games; the higher, the better. The following details the point system:
+
+- Wins = 3 points
+- Ties = 2 points
+- Losses = 1 point
+
+**Example:** A player has a record of 5-1-4 (Wins-Ties-Lossses), that player's total points is 21 [(5x3) + (1x2) + (4x1)].
 
 ## Endpoints
 
