@@ -130,10 +130,9 @@ The following instrutions will detail how to start and play a game of five-card 
 - **get_user_rankings**
     - Path: 'user/ranking'
     - Method: GET
-    - Parameters: player
-    - Returns: Messaging detailing a player's name and record (wins-ties-losses) and their rank out of all the players.
+    - Parameters: None
+    - Returns: A list of players ranked highest to lowerest with players' name,record (wins-ties-losses), rank, and accumulated points.
     - Description: Players are ranked by the total number of points they have earned by playing games. Wins are worth three points, ties are two points, and a loss is one point.
-    - Raises: NotFoundException if a player does not exist.
 
 - **get_game_history**
     - Path: 'user/history'
@@ -175,6 +174,10 @@ The following instrutions will detail how to start and play a game of five-card 
     - Used to create a new game (player_one, player_two).
 - **PlayerMoveForm**
     - Used to detail desired player move (player, card_ids_to_exchange, game_urlsafe_key).
+- **PlayerRankForm**
+    - Used to detail a player's stats (name, stats, points, rank).
+- **PlayerRankForms**
+    - Represents a list of PlayerRankForm.
 - **GameForms**
     - Represents a list of GameForms.
 - **CancelGameForm**

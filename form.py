@@ -36,6 +36,19 @@ class PlayerMoveForm(messages.Message):
     game_urlsafe_key = messages.StringField(3, required=True)
 
 
+class PlayerRankForm(messages.Message):
+    """Outbound - Represents a player's stats."""
+    name = messages.StringField(1)
+    stats = messages.StringField(2)
+    points = messages.IntegerField(3)
+    rank = messages.IntegerField(4)
+
+
+class PlayerRankForms(messages.Message):
+    """Outbound - Represents a list of PlayerRankForms."""
+    player_ranks = messages.MessageField(PlayerRankForm, 1, repeated=True)
+
+
 class GameForms(messages.Message):
     """Outbound - Represents a list of games."""
     games = messages.MessageField(GameForm, 1, repeated=True)

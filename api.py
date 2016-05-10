@@ -5,6 +5,7 @@ Licensed under MIT (https://github.com/brianquach/udacity-nano-fullstack-confere
 """
 import endpoints
 
+from protorpc import message_types
 from protorpc import remote
 
 from google.appengine.api import taskqueue
@@ -19,6 +20,8 @@ from form import GameHistoryForms
 from form import NewGameForm
 from form import PlayerMoveForm
 from form import PlayerName
+from form import PlayerRankForm
+from form import PlayerRankForms
 from form import StringMessage
 from form import UserForm
 from game import Poker
@@ -184,38 +187,34 @@ class FiveCardPokerAPI(remote.Service):
         return StringMessage(message='You have forfeited the game!')
 
     @endpoints.method(
-        request_message=PlayerName,
-        response_message=StringMessage,
+        request_message=message_types.VoidMessage,
+        response_message=PlayerRankForms,
         path='user/ranking',
         name='getUserRankings',
         http_method='GET'
     )
     def get_user_rankings(self, request):
         """Get player stats and ranking based on total points earned."""
-        player = User.query(User.name == request.player).get()
-        if not player:
-            raise endpoints.NotFoundException(
-                '{0} does not exist!'.format(request.player)
-            )
-        player_stats = '{0}-{1}-{2}'.format(
-            player.wins, player.ties, player.losses
-        )
-
         player_rankings = User.query().order(-User.points)
-        player_rank = 0
-        number_of_players = player_rankings.count()
-        for p in player_rankings:
-            player_rank += 1
-            if p.name == player.name:
-                break
-
-        return StringMessage(
-            message='{0} {1} (Wins-Ties-Losses) rank: {2} of {3}.'.format(
-                player.name,
-                player_stats,
-                player_rank,
-                number_of_players
+        
+        player_rank = 1
+        player_rank_forms = []
+        for player in player_rankings:
+            player_stats = '{0}-{1}-{2} (Wins-Ties-Losses)'.format(
+                player.wins, player.ties, player.losses
             )
+            player_rank_forms.append(
+                PlayerRankForm(
+                    name=player.name,
+                    stats=player_stats,
+                    points=player.points,
+                    rank=player_rank
+                )
+            )
+            player_rank += 1
+
+        return PlayerRankForms(
+            player_ranks=player_rank_forms
         )
 
     @endpoints.method(
