@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 """
-Copyright 2016 Brian Quach
-Licensed under MIT (https://github.com/brianquach/udacity-nano-fullstack-conference/blob/master/LICENSE)  # noqa
-
 Code Citation:
   https://github.com/udacity/FSND-P4-Design-A-Game/blob/master/Skeleton%20Project%20Guess-a-Number/utils.py  #noqa
 """
