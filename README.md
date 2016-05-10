@@ -153,6 +153,14 @@ This game uses a simple way to track player performance. Players are ranked by p
     - Description: Returns a list of all completed games (unordered) along with the move history for each game for each player in the game and the game information.
     - Raises: NotFoundException if player does not exist.
 
+- **get_user_hand**
+    - Path: 'game/user/hand'
+    - Method: GET
+    - Parameters: player, game_urlsafe_key
+    - Returns: PlayerHandForm.
+    - Description: Returns the most recent state of a player's hand in a given game.
+    - Raises: NotFoundException if player does not exist. ForbiddenException if player is not part of the game. BadRequestException is game key is not valid.
+
 ## Files
 
  - api.py: Contains endpoints logic.
@@ -201,6 +209,10 @@ This game uses a simple way to track player performance. Players are ranked by p
     - Represents a general purpose message to user.
 - **PlayerName**
     - Represents a player's user name.
+- **CardForm**
+    - Represents a card (name, suit, card_id).
+- **PlayerHandForm**
+    - Represents a player's msot recent hand in a game (name, cards, state)
 
 ## Creator
 

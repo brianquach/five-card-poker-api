@@ -29,6 +29,20 @@ class NewGameForm(messages.Message):
     player_two = messages.StringField(2, required=True)
 
 
+class CardForm(messages.Message):
+    """Outbound - Used to detail a playing card."""
+    name = messages.StringField(1)
+    suit = messages.StringField(2)
+    card_id = messages.StringField(3)
+
+
+class PlayerHandForm(messages.Message):
+    """Outbound - Used to detail a player's hand."""
+    name = messages.StringField(1)
+    cards = messages.MessageField(CardForm, 2, repeated=True)
+    state = messages.StringField(3)
+
+
 class PlayerMoveForm(messages.Message):
     """Inbound - Used to accept player move."""
     player = messages.StringField(1, required=True)
@@ -79,10 +93,16 @@ class GameHistoryForms(messages.Message):
 
 
 class StringMessage(messages.Message):
-    """Outbound response string message"""
+    """Outbound - response string message"""
     message = messages.StringField(1, required=True)
 
 
 class PlayerName(messages.Message):
-    """Outbound response string message"""
+    """Outbound - response string message"""
     player = messages.StringField(1, required=True)
+
+
+class PlayerHandRequest(messages.Message):
+    """Inbound - used to query for a player's hand for an active game."""
+    player = messages.StringField(1, required=True)
+    game_urlsafe_key = messages.StringField(2, required=True)

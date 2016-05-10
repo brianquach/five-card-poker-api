@@ -13,11 +13,14 @@ from google.appengine.ext import ndb
 
 from enum import HandState
 from form import CancelGameForm
+from form import CardForm
 from form import GameForm
 from form import GameForms
 from form import GameHistoryForm
 from form import GameHistoryForms
 from form import NewGameForm
+from form import PlayerHandForm
+from form import PlayerHandRequest
 from form import PlayerMoveForm
 from form import PlayerName
 from form import PlayerRankForm
@@ -196,7 +199,7 @@ class FiveCardPokerAPI(remote.Service):
     def get_user_rankings(self, request):
         """Get player stats and ranking based on total points earned."""
         player_rankings = User.query().order(-User.points)
-        
+
         player_rank = 1
         player_rank_forms = []
         for player in player_rankings:
@@ -283,6 +286,55 @@ class FiveCardPokerAPI(remote.Service):
                 )
         return GameHistoryForms(
             games=game_histories
+        )
+
+    @endpoints.method(
+        request_message=PlayerHandRequest,
+        response_message=PlayerHandForm,
+        path='game/user/hand',
+        name='getUserHand',
+        http_method='GET'
+    )
+    def get_user_hand(self, request):
+        """Get player's most recent hand state for a given game."""
+        game = get_by_urlsafe(request.game_urlsafe_key, Game)
+        player = User.query(User.name == request.player).get()
+        if not player:
+            raise endpoints.NotFoundException(
+                '{0} does not exist!'.format(request.player)
+            )
+        if game.player_one != player.key and game.player_two != player.key:
+            raise endpoints.ForbiddenException(
+                '{0} is not part of this game!'.format(request.player)
+            )
+
+        def get_card_form(hand):
+            card_forms = []
+            hand = Poker.load_player_hand(hand.hand)
+            for card in hand:
+                card_forms.append(
+                    CardForm(name=card.name, suit=card.suit, card_id=card.id)
+                )
+            return card_forms          
+
+        cards = []
+        state = 'STARTING'
+        hands = Hand.query(
+            Hand.game == game.key, Hand.player == player.key
+        ).fetch()
+        
+        if len(hands) == 1:
+            cards = get_card_form(hands[0])
+        else:
+            state = 'ENDING'
+            for hand in hands:
+                if hand.state == HandState.ENDING.name:
+                    cards = get_card_form(hand)
+
+        return PlayerHandForm(
+            name=player.name,
+            cards=cards,
+            state=state
         )
 
 
