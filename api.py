@@ -315,14 +315,14 @@ class FiveCardPokerAPI(remote.Service):
                 card_forms.append(
                     CardForm(name=card.name, suit=card.suit, card_id=card.id)
                 )
-            return card_forms          
+            return card_forms
 
         cards = []
         state = 'STARTING'
         hands = Hand.query(
             Hand.game == game.key, Hand.player == player.key
         ).fetch()
-        
+
         if len(hands) == 1:
             cards = get_card_form(hands[0])
         else:
